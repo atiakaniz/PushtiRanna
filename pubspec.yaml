@@ -1,0 +1,94 @@
+name: pushti_ranna
+description: "A new Flutter project."
+
+version: 1.0.0+2
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.9
+  get: ^4.7.3
+  shared_preferences: ^2.5.3
+  google_fonts: ^6.3.0
+  lottie: ^3.3.2
+  share_plus: ^13.1.0
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_launcher_icons: ^0.14.3
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/beet_salad.jpg
+    - assets/images/cabbage.jpg
+    - assets/images/chickpea_salad.jpg
+    - assets/images/corn_salad.jpg
+    - assets/images/fried_rice.jpg
+    - assets/images/lentil_soup.jpg
+    - assets/images/Khichuri.jpg
+    - assets/images/noodles.jpg
+    - assets/images/oats.jpg
+    - assets/images/paratha.jpg
+    - assets/images/potato_curry.jpg
+    - assets/images/smoothie.jpg
+    - assets/images/spinach_dal.jpg
+    - assets/images/sprout_salad.jpg
+    - assets/images/sweet_potato.jpg
+    - assets/images/tomato_rice.jpg
+    - assets/images/upma.jpg
+    - assets/images/veg_soup.jpg
+    - assets/images/yogurt.jpg
+    - assets/images/chana.jpg
+    - assets/images/lau_curry.jpg
+    - assets/images/lal_shak.jpg
+    - assets/images/pumpkin_mash.jpg
+    - assets/images/mixed_veg.jpg
+    - assets/images/papaya_curry.jpg
+    - assets/images/moong_soup.jpg
+    - assets/images/cucumber_yogurt.jpg
+    - assets/images/veg_semai.jpg
+    - assets/images/oats_pancake.jpg
+    - assets/images/chotpoti.jpg
+    - assets/images/data_chorchori.jpg
+    - assets/images/pui_shak.jpg
+    - assets/images/shukto.jpg
+    - assets/images/dhonepata_dal.jpg
+    - assets/images/methi_curry.jpg
+    - assets/images/cauliflower_roast.jpg
+    - assets/images/tehari.jpg
+    - assets/images/lau_shak.jpg
+    - assets/images/dherosh.jpg
+    - assets/images/kachu_shak.jpg
+    - assets/images/chicken_soup.jpg
+    - assets/images/light_chicken.jpg
+    - assets/images/grilled_chicken.jpg
+    - assets/images/fish_stew.jpg
+    - assets/images/steamed_fish.jpg
+    - assets/images/egg_bhurji.jpg
+    - assets/images/tuna_salad.jpg
+    - assets/images/chicken_khichuri.jpg
+    - assets/images/egg_curry.jpg
+    - assets/images/chicken_stew.jpg
+    - assets/images/oats_upma.jpg
+    - assets/images/veg_omelette.jpg
+    - assets/images/banana_peanut_smoothie.jpg
+    - assets/images/suji_khichuri.jpg
+    - assets/images/chicken_oats.jpg
+    - assets/images/spinach_corn_soup.jpg
+    - assets/images/apple_carrot_salad.jpg
+    - assets/images/thai_soup.jpg
+    - assets/images/sweet_corn_soup.jpg
+    - assets/images/chicken_corn_soup.jpg
+    - assets/animations/food.json
+    - assets/icon/app_icon.jpg
+
+flutter_launcher_icons:
+    android: true
+    ios: true
+    image_path: "assets/icon/app_icon.jpg"
