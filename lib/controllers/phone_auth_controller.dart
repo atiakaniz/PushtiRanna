@@ -39,16 +39,21 @@ class PhoneAuthController extends GetxController {
     await _box.delete(_phoneKey);
   }
 
+  /// Strip spaces, dashes, parentheses; ensure E.164 `+<digits>` shape.
   String normalizePhone(String input) {
-    var p = input.trim().replaceAll(RegExp(r'\s+'), '');
+    var p = input.trim();
+    p = p.replaceAll(RegExp(r'[\s\-()]'), '');
     if (p.startsWith('+')) return p;
     if (p.startsWith('00')) return '+${p.substring(2)}';
     if (p.startsWith('0')) return '+88$p';
     return '+88$p';
   }
 
+  /// True if the phone looks like E.164 (e.g. +8801834268008).
+  /// Allows 8–15 digits after the `+` so partial-typed numbers don't crash
+  /// but still rejects obviously invalid input.
   bool isValidPhone(String phone) =>
-      RegExp(r'^\+\d{10,15}$').hasMatch(phone);
+      RegExp(r'^\+\d{8,15}$').hasMatch(phone);
 
   // -- bdapps API ------------------------------------------------------------
 

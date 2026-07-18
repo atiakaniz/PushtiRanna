@@ -97,8 +97,11 @@ class _PhoneScreenState extends State<PhoneScreen> {
   Future<void> _submit() async {
     final phone = auth.normalizePhone(_phone.text);
     if (!auth.isValidPhone(phone)) {
-      Get.snackbar('Invalid number', 'Please enter a valid phone number',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Invalid number',
+        'Please enter your full phone number (e.g. +8801XXXXXXXXX)',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
