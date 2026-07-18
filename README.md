@@ -10,7 +10,7 @@ PushtiRanna ("nutritious food" in Bangla) is a mobile-first recipe companion foc
 
 - 📱 **Phone-number gate** — one-time local sign-in (no server, no OTP).
 - 🍱 **Recipe library** — 50+ Bengali recipes with images, ingredients, and steps.
-- ❤️ **Favorites** — bookmark recipes you love; persisted with `SharedPreferences`.
+- ❤️ **Favorites** — bookmark recipes you love; persisted with `Hive`.
 - 🌐 **Bilingual UI** — full English + বাংলা translations.
 - ⚙️ **Settings** — language switcher, share app, logout.
 - 🎞️ **Lottie animations** — splash and empty-state visuals.
@@ -23,7 +23,7 @@ PushtiRanna ("nutritious food" in Bangla) is a mobile-first recipe companion foc
 |-------|------|
 | Framework | Flutter (Dart `>=3.0.0 <4.0.0`) |
 | State management | [GetX](https://pub.dev/packages/get) (`get: ^4.7.3`) |
-| Local storage | [shared_preferences](https://pub.dev/packages/shared_preferences) |
+| Local storage | [Hive](https://pub.dev/packages/hive) (`hive`, `hive_flutter`) |
 | Fonts | [google_fonts](https://pub.dev/packages/google_fonts) |
 | Animations | [lottie](https://pub.dev/packages/lottie) |
 | Sharing | [share_plus](https://pub.dev/packages/share_plus) |
@@ -92,12 +92,22 @@ For signed production builds, configure `android/key.properties` and reference i
 ## 🔐 How Auth Works (Phone-Only)
 
 1. App launches → `WelcomeScreen`.
-2. `GateScreen` checks `SharedPreferences` for a saved phone number.
+2. `GateScreen` reads the `settings` Hive box for a saved phone number.
 3. If absent → `PhoneScreen` collects a `+8801XXXXXXXXX` number, normalizes it, saves it locally.
 4. If present → straight to `HomeScreen`.
 5. Settings → Logout clears the saved number and returns to `GateScreen`.
 
-No data leaves the device. No server round-trip. No OTP.
+All persistence uses **Hive** boxes (`recipes`, `favorites`, `settings`). No data leaves the device. No server round-trip. No OTP.
+
+### Regenerating the Hive adapter
+
+If you add or rename fields on `RecipeModel`, regenerate the adapter with:
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+The generated file is `lib/models/recipe_model.g.dart` — do not edit by hand.
 
 ---
 

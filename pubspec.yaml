@@ -12,7 +12,9 @@ dependencies:
 
   cupertino_icons: ^1.0.9
   get: ^4.7.3
-  shared_preferences: ^2.5.3
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.4
   google_fonts: ^6.3.0
   lottie: ^3.3.2
   share_plus: ^13.1.0
@@ -20,6 +22,8 @@ dependencies:
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.13
 
 flutter:
   uses-material-design: true
