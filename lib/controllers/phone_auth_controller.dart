@@ -1,37 +1,44 @@
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-/// Phone-number entry controller.
-/// Pure local persistence via Hive — no server / OTP / subscription.
+import '../services/bdapps_service.dart';
+
+/// Phone-number entry + bdapps subscription controller.
+///
+/// Phone persistence is local-only (Hive). Subscription/OTP go through the
+/// [BdappsService] against `https://pushtiranna.nestorabyatia.xyz`.
 class PhoneAuthController extends GetxController {
   static const _boxName = 'settings';
   static const _phoneKey = 'saved_phone';
 
   final RxString currentPhone = ''.obs;
   final RxBool isLoading = false.obs;
+  final RxString lastError = ''.obs;
+
+  /// Returned by `sendOtp` and required by `verifyOtp`.
+  final RxnString referenceNo = RxnString();
 
   Box<String> get _box => Hive.box<String>(_boxName);
 
-  /// Persists the chosen phone number locally.
+  // -- local persistence -----------------------------------------------------
+
   Future<void> savePhone(String phone) async {
     currentPhone.value = phone;
     await _box.put(_phoneKey, phone);
   }
 
-  /// Returns the locally-saved phone, or null if none is saved.
   Future<String?> getSavedPhone() async {
     final p = _box.get(_phoneKey);
     currentPhone.value = p ?? '';
     return p;
   }
 
-  /// Removes the saved phone number (e.g. "Edit number" button).
   Future<void> clearSavedPhone() async {
     currentPhone.value = '';
+    referenceNo.value = null;
     await _box.delete(_phoneKey);
   }
 
-  /// Normalises to E.164 — Bangladesh assumed if no country code is given.
   String normalizePhone(String input) {
     var p = input.trim().replaceAll(RegExp(r'\s+'), '');
     if (p.startsWith('+')) return p;
@@ -42,6 +49,101 @@ class PhoneAuthController extends GetxController {
 
   bool isValidPhone(String phone) =>
       RegExp(r'^\+\d{10,15}$').hasMatch(phone);
+
+  // -- bdapps API ------------------------------------------------------------
+
+  /// `true` if the user is subscribed on the server.
+  Future<bool> checkSubscription() async {
+    final phone = currentPhone.value;
+    if (phone.isEmpty) return false;
+    isLoading.value = true;
+    lastError.value = '';
+    try {
+      final data = await BdappsService.checkSubscription(phone);
+      final v = data['isSubscribed'];
+      return v == true || v == 'true';
+    } on BdappsException catch (e) {
+      lastError.value = e.message;
+      return false;
+    } catch (e) {
+      lastError.value = 'Could not check subscription: $e';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Sends a 6-digit OTP. Stores the `referenceNo` for the next step.
+  Future<bool> sendOtp() async {
+    final phone = currentPhone.value;
+    if (phone.isEmpty) {
+      lastError.value = 'No phone number saved';
+      return false;
+    }
+    isLoading.value = true;
+    lastError.value = '';
+    try {
+      final data = await BdappsService.sendOtp(phone);
+      final ref = data['referenceNo']?.toString();
+      if (ref == null || ref.isEmpty) {
+        lastError.value = 'No reference number returned';
+        return false;
+      }
+      referenceNo.value = ref;
+      return true;
+    } on BdappsException catch (e) {
+      lastError.value = e.message;
+      return false;
+    } catch (e) {
+      lastError.value = 'Could not send OTP: $e';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Verifies [otp] using the stored reference number.
+  Future<bool> verifyOtp(String otp) async {
+    final ref = referenceNo.value;
+    if (ref == null) {
+      lastError.value = 'No OTP request in progress';
+      return false;
+    }
+    isLoading.value = true;
+    lastError.value = '';
+    try {
+      final data = await BdappsService.verifyOtp(otp, ref);
+      final ok = data['isValid'] == true || data['isValid'] == 'true';
+      if (!ok) lastError.value = 'Invalid OTP';
+      return ok;
+    } on BdappsException catch (e) {
+      lastError.value = e.message;
+      return false;
+    } catch (e) {
+      lastError.value = 'Could not verify OTP: $e';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<bool> unsubscribe() async {
+    isLoading.value = true;
+    lastError.value = '';
+    try {
+      final data = await BdappsService.unsubscribe(currentPhone.value);
+      return data['statusCode']?.toString() == '200' ||
+          data['status']?.toString().toLowerCase() == 'ok';
+    } on BdappsException catch (e) {
+      lastError.value = e.message;
+      return false;
+    } catch (e) {
+      lastError.value = 'Could not unsubscribe: $e';
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   @override
   void onInit() {

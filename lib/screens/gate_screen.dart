@@ -27,8 +27,16 @@ class _GateScreenState extends State<GateScreen> {
 
     if (savedPhone == null || savedPhone.isEmpty) {
       Get.offAllNamed(AppRoutes.PHONE);
-    } else {
+      return;
+    }
+
+    final subscribed = await auth.checkSubscription();
+    if (!mounted) return;
+
+    if (subscribed) {
       Get.offAllNamed(AppRoutes.HOME);
+    } else {
+      Get.offAllNamed(AppRoutes.SUBSCRIPTION);
     }
   }
 

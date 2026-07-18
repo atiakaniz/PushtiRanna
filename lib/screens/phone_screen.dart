@@ -103,6 +103,14 @@ class _PhoneScreenState extends State<PhoneScreen> {
     }
 
     await auth.savePhone(phone);
-    Get.offAllNamed(AppRoutes.HOME);
+
+    final subscribed = await auth.checkSubscription();
+    if (!mounted) return;
+
+    if (subscribed) {
+      Get.offAllNamed(AppRoutes.HOME);
+    } else {
+      Get.offAllNamed(AppRoutes.SUBSCRIPTION);
+    }
   }
 }

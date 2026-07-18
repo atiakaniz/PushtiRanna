@@ -6,6 +6,8 @@ import '../screens/settings_screen.dart';
 import '../screens/welcome_screen.dart';
 import '../screens/phone_screen.dart';
 import '../screens/gate_screen.dart';
+import '../screens/subscription_screen.dart';
+import '../screens/otp_screen.dart';
 
 class AppRoutes {
   static const WELCOME = '/welcome';
@@ -16,11 +18,15 @@ class AppRoutes {
 
   static const GATE = '/gate';
   static const PHONE = '/phone';
+  static const SUBSCRIPTION = '/subscription';
+  static const OTP = '/otp';
 
   static final routes = [
     GetPage(name: WELCOME, page: () => const WelcomeScreen()),
     GetPage(name: GATE, page: () => const GateScreen()),
     GetPage(name: PHONE, page: () => const PhoneScreen()),
+    GetPage(name: SUBSCRIPTION, page: () => const SubscriptionScreen()),
+    GetPage(name: OTP, page: () => const OtpScreen()),
     GetPage(name: HOME, page: () => HomeScreen()),
     GetPage(name: DETAIL, page: () => const DetailScreen()),
     GetPage(name: FAVORITE, page: () => const FavoriteScreen()),
