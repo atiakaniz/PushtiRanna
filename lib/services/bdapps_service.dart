@@ -80,13 +80,41 @@ class BdappsService {
     }
     final raw = res.body.trim();
     if (raw.isEmpty) return const {};
+    Map<String, dynamic> map;
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) return decoded;
-      return {'value': decoded};
+      if (decoded is Map<String, dynamic>) {
+        map = decoded;
+      } else {
+        return {'value': decoded};
+      }
     } on FormatException {
       // Backend returned non-JSON (e.g. an HTML error page) — pass it through.
       return {'raw': raw};
     }
+
+    // bdapps returns a top-level "success": false with statusCode E1304 / E13xxx.
+    // Surface that text to the controller so it shows up in `lastError`.
+    final ok = map['success'];
+    if (ok == false) {
+      final msg = (map['message'] ??
+              map['statusDetail'] ??
+              map['statusCode'] ??
+              '$op failed')
+          .toString();
+      throw BdappsException('$op: $msg', statusCode: res.statusCode);
+    }
+
+    // statusCode "200" or 200 means OK. Anything else is an error.
+    final code = map['statusCode'];
+    if (code != null && code.toString() != '200') {
+      final msg = (map['message'] ??
+              map['statusDetail'] ??
+              '$op failed (status $code)')
+          .toString();
+      throw BdappsException(msg, statusCode: res.statusCode);
+    }
+
+    return map;
   }
 }
