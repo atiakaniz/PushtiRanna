@@ -30,10 +30,16 @@ class _GateScreenState extends State<GateScreen> {
       return;
     }
 
+    if (auth.isSubscribed) {
+      Get.offAllNamed(AppRoutes.HOME);
+      return;
+    }
+
     final subscribed = await auth.checkSubscription();
     if (!mounted) return;
 
     if (subscribed) {
+      await auth.markSubscribed();
       Get.offAllNamed(AppRoutes.HOME);
     } else {
       Get.offAllNamed(AppRoutes.SUBSCRIPTION);

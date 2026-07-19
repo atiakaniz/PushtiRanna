@@ -29,8 +29,11 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final ok = await auth.sendOtp();
     if (!mounted) return;
     if (ok) {
+      debugPrint('[Subscription] sendOtp OK, referenceNo='
+          '${auth.referenceNo.value}, navigating to ${AppRoutes.OTP}');
       Get.offAllNamed(AppRoutes.OTP);
-    } else if (auth.lastError.value.isNotEmpty) {
+    } else {
+      debugPrint('[Subscription] sendOtp FAILED: ${auth.lastError.value}');
       _snack(auth.lastError.value);
     }
   }

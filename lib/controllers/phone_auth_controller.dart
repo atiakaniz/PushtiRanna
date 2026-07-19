@@ -10,6 +10,7 @@ import '../services/bdapps_service.dart';
 class PhoneAuthController extends GetxController {
   static const _boxName = 'settings';
   static const _phoneKey = 'saved_phone';
+  static const _subscribedKey = 'is_subscribed';
 
   final RxString currentPhone = ''.obs;
   final RxBool isLoading = false.obs;
@@ -19,6 +20,16 @@ class PhoneAuthController extends GetxController {
   final RxnString referenceNo = RxnString();
 
   Box<String> get _box => Hive.box<String>(_boxName);
+
+  bool get isSubscribed => _box.get(_subscribedKey) == '1';
+
+  Future<void> markSubscribed() async {
+    await _box.put(_subscribedKey, '1');
+  }
+
+  Future<void> markUnsubscribed() async {
+    await _box.delete(_subscribedKey);
+  }
 
   // -- local persistence -----------------------------------------------------
 
@@ -124,7 +135,11 @@ class PhoneAuthController extends GetxController {
     try {
       final data = await BdappsService.verifyOtp(otp, ref);
       final ok = data['isValid'] == true || data['isValid'] == 'true';
-      if (!ok) lastError.value = 'Invalid OTP';
+      if (!ok) {
+        lastError.value = 'Invalid OTP';
+      } else {
+        await markSubscribed();
+      }
       return ok;
     } on BdappsException catch (e) {
       lastError.value = e.message;
