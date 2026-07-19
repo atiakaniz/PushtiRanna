@@ -57,6 +57,11 @@ class PhoneAuthController extends GetxController {
 
   // -- bdapps API ------------------------------------------------------------
 
+  /// bdapps expects E.164 *without* the `+` sign:
+  /// e.g. `8801834268008` instead of `+8801834268008`.
+  String _forApi(String phone) =>
+      phone.startsWith('+') ? phone.substring(1) : phone;
+
   /// `true` if the user is subscribed on the server.
   Future<bool> checkSubscription() async {
     final phone = currentPhone.value;
@@ -64,7 +69,7 @@ class PhoneAuthController extends GetxController {
     isLoading.value = true;
     lastError.value = '';
     try {
-      final data = await BdappsService.checkSubscription(phone);
+      final data = await BdappsService.checkSubscription(_forApi(phone));
       final v = data['isSubscribed'];
       return v == true || v == 'true';
     } on BdappsException catch (e) {
@@ -88,7 +93,7 @@ class PhoneAuthController extends GetxController {
     isLoading.value = true;
     lastError.value = '';
     try {
-      final data = await BdappsService.sendOtp(phone);
+      final data = await BdappsService.sendOtp(_forApi(phone));
       final ref = data['referenceNo']?.toString();
       if (ref == null || ref.isEmpty) {
         lastError.value = 'No reference number returned';
@@ -136,7 +141,7 @@ class PhoneAuthController extends GetxController {
     isLoading.value = true;
     lastError.value = '';
     try {
-      final data = await BdappsService.unsubscribe(currentPhone.value);
+      final data = await BdappsService.unsubscribe(_forApi(currentPhone.value));
       return data['statusCode']?.toString() == '200' ||
           data['status']?.toString().toLowerCase() == 'ok';
     } on BdappsException catch (e) {

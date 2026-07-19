@@ -29,7 +29,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     final ok = await auth.sendOtp();
     if (!mounted) return;
     if (ok) {
-      Get.toNamed(AppRoutes.OTP);
+      Get.offAllNamed(AppRoutes.OTP);
     } else if (auth.lastError.value.isNotEmpty) {
       _snack(auth.lastError.value);
     }
