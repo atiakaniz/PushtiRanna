@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/phone_auth_controller.dart';
 import '../routes/app_routes.dart';
+import '../themes/auth_theme.dart';
 
 /// Decision screen shown right after the splash.
 /// - No saved phone number   → PHONE
@@ -49,8 +50,10 @@ class _GateScreenState extends State<GateScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFFF5FFF5),
-      body: Center(child: CircularProgressIndicator(color: Color(0xFF2E7D32))),
+      backgroundColor: AuthTheme.background,
+      body: Center(
+        child: CircularProgressIndicator(color: AuthTheme.accent),
+      ),
     );
   }
 }
