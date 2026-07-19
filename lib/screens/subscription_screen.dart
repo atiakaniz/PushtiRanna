@@ -78,13 +78,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       _snack('Please enter the $_otpLength-digit code');
       return;
     }
+    debugPrint('[Subscription] _verify starting code=$code ref=${auth.referenceNo.value}');
     final ok = await auth.verifyOtp(code);
+    debugPrint('[Subscription] _verify ok=$ok err=${auth.lastError.value}');
     if (!mounted) return;
     if (ok) {
       Get.offAllNamed(AppRoutes.HOME);
-    } else if (auth.lastError.value.isNotEmpty) {
-      _snack(auth.lastError.value);
+      return;
     }
+    final msg = auth.lastError.value.isEmpty
+        ? 'OTP not accepted. Please try again.'
+        : auth.lastError.value;
+    auth.lastError.value = msg; // ensure the inline label updates
   }
 
   void _onDigitChanged(int index, String value) {
@@ -110,9 +115,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   }
 
   void _maybeAutoVerify() {
-    if (_code.length == _otpLength) {
-      _verify();
-    }
+    // Auto-verify disabled so the user controls when the request fires.
+    // Tap the Verify button to submit.
   }
 
   void _snack(String msg) {
@@ -158,7 +162,22 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 foci: _foci,
                 onChanged: _onDigitChanged,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 14),
+              Obx(() => auth.lastError.value.isEmpty
+                  ? const SizedBox(height: 6)
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        auth.lastError.value,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AuthTheme.error,
+                          fontSize: 13,
+                          height: 1.3,
+                        ),
+                      ),
+                    )),
+              const SizedBox(height: 24),
               Obx(() => SizedBox(
                     height: 54,
                     child: ElevatedButton(
@@ -187,19 +206,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ),
               ),
               const Spacer(),
-              Obx(() => _otpSent.value && auth.lastError.value.isNotEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        auth.lastError.value,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AuthTheme.error,
-                          fontSize: 13,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink()),
             ],
           ),
         ),

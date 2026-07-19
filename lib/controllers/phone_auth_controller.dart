@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -134,17 +135,28 @@ class PhoneAuthController extends GetxController {
     lastError.value = '';
     try {
       final data = await BdappsService.verifyOtp(otp, ref);
+      debugPrint('[PhoneAuth] verifyOtp response: $data');
       final ok = data['isValid'] == true || data['isValid'] == 'true';
-      if (!ok) {
-        lastError.value = 'Invalid OTP';
-      } else {
+      if (ok) {
         await markSubscribed();
+        return true;
       }
-      return ok;
+      // Server didn't flag the OTP invalid (e.g. statusCode 200 but no
+      // isValid field). Surface whatever detail it gave us so the user can
+      // see *why* it didn't accept the code.
+      final detail = (data['statusDetail'] ??
+              data['message'] ??
+              data['statusCode'] ??
+              'Server did not confirm the OTP')
+          .toString();
+      lastError.value = 'OTP not accepted: $detail';
+      return false;
     } on BdappsException catch (e) {
+      debugPrint('[PhoneAuth] verifyOtp BdappsException: ${e.message}');
       lastError.value = e.message;
       return false;
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('[PhoneAuth] verifyOtp caught: $e\n$st');
       lastError.value = 'Could not verify OTP: $e';
       return false;
     } finally {
