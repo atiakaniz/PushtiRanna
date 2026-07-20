@@ -134,15 +134,6 @@ class HomeScreen extends StatelessWidget {
             ),
 
             ListTile(
-              leading: const Icon(Icons.library_books),
-              title: const Text("Manage recipes"),
-              subtitle: const Text("Add, edit, or delete recipes"),
-              onTap: () {
-                Get.toNamed(AppRoutes.ADMIN_RECIPES);
-              },
-            ),
-
-            ListTile(
               leading: const Icon(Icons.settings),
               title: const Text("Settings"),
               onTap: () {

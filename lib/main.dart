@@ -10,6 +10,7 @@ import 'translations/app_translation.dart';
 import 'controllers/favorite_controller.dart';
 import 'controllers/phone_auth_controller.dart';
 import 'controllers/recipe_controller.dart';
+import 'controllers/admin_gate_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +34,7 @@ Future<void> main() async {
   Get.put(FavoriteController(), permanent: true);
   Get.put(PhoneAuthController(), permanent: true);
   Get.put(RecipeController(), permanent: true);
+  Get.put(AdminGateController(), permanent: true);
   runApp(const PushtiRannaApp());
 }
 

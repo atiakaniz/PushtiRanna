@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/admin_gate_controller.dart';
 import '../models/recipe_model.dart';
 import '../screens/home_screen.dart';
 import '../screens/detail_screen.dart';
@@ -44,9 +45,57 @@ class AppRoutes {
     ),
     GetPage(name: FAVORITE, page: () => const FavoriteScreen()),
     GetPage(name: SETTINGS, page: () => const SettingsScreen()),
-    GetPage(name: ADMIN_RECIPES, page: () => const AdminRecipesScreen()),
-    GetPage(name: RECIPE_EDITOR, page: () => const RecipeEditorScreen()),
+    GetPage(
+      name: ADMIN_RECIPES,
+      page: () {
+        // End users should never reach this route — long-pressing the
+        // hidden version label in Settings unlocks the gate first. If
+        // they still try (deep link, hot reload, etc.), bounce them.
+        final gate = Get.isRegistered<AdminGateController>()
+            ? Get.find<AdminGateController>()
+            : null;
+        if (gate != null && gate.isAdmin.value) {
+          return const AdminRecipesScreen();
+        }
+        return const _LockedScreen();
+      },
+    ),
+    GetPage(
+      name: RECIPE_EDITOR,
+      page: () {
+        final gate = Get.isRegistered<AdminGateController>()
+            ? Get.find<AdminGateController>()
+            : null;
+        if (gate != null && gate.isAdmin.value) {
+          return const RecipeEditorScreen();
+        }
+        return const _LockedScreen();
+      },
+    ),
   ];
+}
+
+/// Shown when someone navigates to /admin/recipes or /admin/recipe-editor
+/// without unlocking the gate. Visually distinct so it's obvious something
+/// is off, but it never reveals that an admin surface exists.
+class _LockedScreen extends StatelessWidget {
+  const _LockedScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Not available')),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'This section is not available.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Shown if the user reaches /detail without a recipe argument — e.g. via a

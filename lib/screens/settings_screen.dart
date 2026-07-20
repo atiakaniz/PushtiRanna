@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../controllers/admin_gate_controller.dart';
 import '../controllers/language_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../routes/app_routes.dart';
@@ -166,9 +167,76 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
             ),
+
+            // Hidden gesture target for the admin unlock flow. End users
+            // will never see a "Manage recipes" entry — only the owner who
+            // knows to long-press this label gets the PIN dialog.
+            const Spacer(),
+            Center(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onLongPress: () => _showAdminUnlock(context),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'PushtiRanna v1.0.0',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.35),
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _showAdminUnlock(BuildContext context) async {
+    final gate = Get.find<AdminGateController>();
+    final pinCtrl = TextEditingController();
+
+    final ok = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Owner PIN'),
+        content: TextField(
+          controller: pinCtrl,
+          autofocus: true,
+          obscureText: true,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(
+            hintText: AdminGateController.hasConfiguredPin
+                ? 'Enter PIN'
+                : 'No PIN configured in this build',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Unlock'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true) {
+      await gate.unlock(pinCtrl.text);
+      if (gate.isAdmin.value) {
+        Get.offAllNamed(AppRoutes.ADMIN_RECIPES);
+      } else {
+        Get.snackbar(
+          'Wrong PIN',
+          'That PIN is not valid for this build.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    }
+    pinCtrl.dispose();
   }
 }
