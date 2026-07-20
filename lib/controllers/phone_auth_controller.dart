@@ -105,11 +105,34 @@ class PhoneAuthController extends GetxController {
     lastError.value = '';
     try {
       final data = await BdappsService.sendOtp(_forApi(phone));
-      final ref = data['referenceNo']?.toString();
-      if (ref == null || ref.isEmpty) {
-        lastError.value = 'No reference number returned';
+      debugPrint('[PhoneAuth] sendOtp response: $data');
+
+      // bdapps sends `referenceNo: null` for every kind of failure (already
+      // registered, operator not allowed, etc.). Treat that as a hard fail
+      // rather than storing the literal string "null" — otherwise the next
+      // verifyOtp call would forward "null" as the reference and the server
+      // would return E1854 "Could not find OTP".
+      final rawRef = data['referenceNo'];
+      final ref = rawRef is String && rawRef.isNotEmpty && rawRef != 'null'
+          ? rawRef
+          : null;
+
+      // Also surface business-level statusCode payloads (e.g. E1351).
+      final code = data['statusCode']?.toString().toUpperCase();
+      final isBusinessFail = code != null &&
+          code != '200' &&
+          code != 'S1000' &&
+          code != 'OK' &&
+          code != 'SUCCESS';
+      if (ref == null) {
+        final detail = isBusinessFail
+            ? (data['statusDetail'] ?? data['message'] ?? code ?? 'unknown')
+                .toString()
+            : 'No reference number returned';
+        lastError.value = detail;
         return false;
       }
+
       referenceNo.value = ref;
       return true;
     } on BdappsException catch (e) {
@@ -125,11 +148,12 @@ class PhoneAuthController extends GetxController {
 
   /// Verifies [otp] using the stored reference number.
   Future<bool> verifyOtp(String otp) async {
-    final ref = referenceNo.value;
-    if (ref == null) {
+    final rawRef = referenceNo.value;
+    if (rawRef == null || rawRef.isEmpty || rawRef == 'null') {
       lastError.value = 'No OTP request in progress';
       return false;
     }
+    final ref = rawRef;
     isLoading.value = true;
     lastError.value = '';
     try {
