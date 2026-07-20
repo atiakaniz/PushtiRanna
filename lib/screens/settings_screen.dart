@@ -22,11 +22,13 @@ class SettingsScreen extends StatelessWidget {
         foregroundColor: Colors.white,
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             Text(
               'language'.tr,
               style: const TextStyle(
@@ -168,28 +170,48 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
 
-            // Hidden gesture target for the admin unlock flow. End users
-            // will never see a "Manage recipes" entry — only the owner who
-            // knows to long-press this label gets the PIN dialog.
-            const Spacer(),
-            Center(
+            // Leave room so the pinned footer never overlaps content.
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+
+          // Pinned version footer with the hidden admin unlock gesture.
+          // End users will never see a "Manage recipes" entry — only the
+          // owner who knows to long-press this label gets the PIN dialog.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 8,
+            child: Center(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onLongPress: () => _showAdminUnlock(context),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                    ),
+                  ),
                   child: Text(
                     'PushtiRanna v1.0.0',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.35),
+                      color: Colors.white.withValues(alpha: 0.55),
                       fontSize: 12,
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
