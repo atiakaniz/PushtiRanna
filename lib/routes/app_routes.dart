@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../models/recipe_model.dart';
 import '../screens/home_screen.dart';
 import '../screens/detail_screen.dart';
 import '../screens/favorite_screen.dart';
@@ -25,8 +27,41 @@ class AppRoutes {
     GetPage(name: PHONE, page: () => const PhoneScreen()),
     GetPage(name: SUBSCRIPTION, page: () => const SubscriptionScreen()),
     GetPage(name: HOME, page: () => HomeScreen()),
-    GetPage(name: DETAIL, page: () => const DetailScreen()),
+    GetPage(
+      name: DETAIL,
+      page: () {
+        // Pull the recipe out of Get.arguments if a caller used the
+        // arguments: ... form. The recipe is required.
+        final arg = Get.arguments;
+        if (arg is RecipeModel) return DetailScreen(recipe: arg);
+        return const _MissingRecipeScreen();
+      },
+    ),
     GetPage(name: FAVORITE, page: () => const FavoriteScreen()),
     GetPage(name: SETTINGS, page: () => const SettingsScreen()),
   ];
+}
+
+/// Shown if the user reaches /detail without a recipe argument — e.g. via a
+/// deep link. Kept inside the routes file so it's co-located with the only
+/// route that needs it.
+class _MissingRecipeScreen extends StatelessWidget {
+  const _MissingRecipeScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Recipe')),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'No recipe was selected. Please open a recipe from the home '
+            'screen.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
 }

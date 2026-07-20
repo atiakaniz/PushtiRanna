@@ -1,33 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../models/recipe_model.dart';
-import '../controllers/favorite_controller.dart';
 
+import '../controllers/favorite_controller.dart';
+import '../models/recipe_model.dart';
+
+/// Recipe detail page.
+///
+/// Accepts the recipe through the constructor instead of reaching into
+/// [Get.arguments] so we never crash on a missing/wrong-type argument.
+/// The favorite heart is wired through [FavoriteController] which is
+/// registered permanently in `main.dart`.
 class DetailScreen extends StatelessWidget {
-  const DetailScreen({super.key});
+  const DetailScreen({super.key, required this.recipe});
+
+  final RecipeModel recipe;
 
   @override
   Widget build(BuildContext context) {
-    final RecipeModel recipe = Get.arguments;
+    // Safe-find the favorite controller. If for some reason the permanent
+    // registration in main.dart hasn't run yet (e.g. during hot-restart
+    // race), fall back to a local instance so the page still renders.
     final FavoriteController favoriteController =
-    Get.find<FavoriteController>();
+        Get.isRegistered<FavoriteController>()
+            ? Get.find<FavoriteController>()
+            : Get.put(FavoriteController(), permanent: true);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(recipe.title),
         actions: [
-          Obx(
-                () => IconButton(
-              icon: Icon(
+          IconButton(
+            icon: Obx(() {
+              // Observe favoriteRecipes so the heart updates when toggled.
+              favoriteController.favoriteRecipes.length;
+              return Icon(
                 favoriteController.isFavorite(recipe)
                     ? Icons.favorite
                     : Icons.favorite_border,
                 color: Colors.red,
-              ),
-              onPressed: () {
-                favoriteController.toggleFavorite(recipe);
-              },
-            ),
+              );
+            }),
+            onPressed: () => favoriteController.toggleFavorite(recipe),
           ),
         ],
       ),
@@ -36,7 +49,6 @@ class DetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Recipe Image
             ClipRRect(
               borderRadius: BorderRadius.circular(15),
@@ -47,7 +59,6 @@ class DetailScreen extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
-
             const SizedBox(height: 15),
 
             // English Title
@@ -58,7 +69,6 @@ class DetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 5),
 
             // Bangla Title
@@ -70,13 +80,11 @@ class DetailScreen extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-
             const SizedBox(height: 15),
 
             // Calories & Time
             Row(
               children: [
-
                 Expanded(
                   child: Card(
                     child: Padding(
@@ -94,7 +102,6 @@ class DetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 Expanded(
                   child: Card(
                     child: Padding(
@@ -114,7 +121,6 @@ class DetailScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 20),
 
             const Divider(),
@@ -128,11 +134,9 @@ class DetailScreen extends StatelessWidget {
                 color: Colors.green,
               ),
             ),
-
             const SizedBox(height: 10),
-
             ...recipe.ingredients.map(
-                  (item) => ListTile(
+              (item) => ListTile(
                 leading: const Icon(
                   Icons.check_circle,
                   color: Colors.green,
@@ -140,7 +144,6 @@ class DetailScreen extends StatelessWidget {
                 title: Text(item),
               ),
             ),
-
             const SizedBox(height: 10),
 
             const Divider(),
@@ -154,13 +157,11 @@ class DetailScreen extends StatelessWidget {
                 color: Colors.green,
               ),
             ),
-
             const SizedBox(height: 10),
-
             Column(
               children: List.generate(
                 recipe.steps.length,
-                    (index) {
+                (index) {
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.green,
@@ -171,14 +172,11 @@ class DetailScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    title: Text(
-                      recipe.steps[index],
-                    ),
+                    title: Text(recipe.steps[index]),
                   );
                 },
               ),
             ),
-
             const SizedBox(height: 10),
 
             const Divider(),
@@ -192,10 +190,8 @@ class DetailScreen extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(15),
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-
                     const Text(
                       "Nutrition Information",
                       style: TextStyle(
@@ -203,35 +199,18 @@ class DetailScreen extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
-                    Text(
-                      "Calories: ${recipe.calories} kcal",
-                    ),
-
+                    Text("Calories: ${recipe.calories} kcal"),
                     const SizedBox(height: 5),
-
-                    const Text(
-                      "Protein: Moderate",
-                    ),
-
+                    const Text("Protein: Moderate"),
                     const SizedBox(height: 5),
-
-                    const Text(
-                      "Fiber: High",
-                    ),
-
+                    const Text("Fiber: High"),
                     const SizedBox(height: 5),
-
-                    const Text(
-                      "Fat: Low",
-                    ),
+                    const Text("Fat: Low"),
                   ],
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
           ],
         ),
