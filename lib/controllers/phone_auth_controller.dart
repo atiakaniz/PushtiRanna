@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-
 import '../services/bdapps_service.dart';
 
 /// Phone-number entry + bdapps subscription controller.
@@ -136,14 +135,31 @@ class PhoneAuthController extends GetxController {
     try {
       final data = await BdappsService.verifyOtp(otp, ref);
       debugPrint('[PhoneAuth] verifyOtp response: $data');
-      final ok = data['isValid'] == true || data['isValid'] == 'true';
+
+      // The PHP layer translates bdapps' verify response into isValid.
+      // Be lenient: accept either an explicit isValid, an S1000 statusCode,
+      // or a subscriptionStatus of REGISTERED.
+      final isValidFlag = data['isValid'];
+      final statusCode = data['statusCode']?.toString().toUpperCase();
+      final subStatus =
+          data['subscriptionStatus']?.toString().toUpperCase();
+
+      final ok = isValidFlag == true ||
+          isValidFlag == 'true' ||
+          statusCode == 'S1000' ||
+          subStatus == 'REGISTERED';
+
       if (ok) {
         await markSubscribed();
+        // Ask the server for the latest status so the cached value matches
+        // bdapps's view (also primes GateScreen on next cold launch).
+        // Swallow any error here — we already have a positive verify.
+        try {
+          await BdappsService.checkSubscription(_forApi(currentPhone.value));
+        } catch (_) {}
         return true;
       }
-      // Server didn't flag the OTP invalid (e.g. statusCode 200 but no
-      // isValid field). Surface whatever detail it gave us so the user can
-      // see *why* it didn't accept the code.
+
       final detail = (data['statusDetail'] ??
               data['message'] ??
               data['statusCode'] ??
