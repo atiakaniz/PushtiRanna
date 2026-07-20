@@ -4,17 +4,25 @@ import 'package:hive_flutter/hive_flutter.dart';
 /// Gates the recipe-admin screens behind a secret unlock so end users
 /// never see them. The PIN is injected at build time via
 /// `--dart-define=ADMIN_PIN=xxxx`; if no PIN is defined, the controller
-/// refuses every attempt (fail-closed).
+/// falls back to a default owner PIN baked into the source.
 class AdminGateController extends GetxController {
   static const _pinFlagKey = 'admin_unlocked';
   static const _boxName = 'settings';
 
-  /// PIN injected at build time. Falls back to a non-empty string so the
-  /// comparison still works, but no match is possible unless the build
-  /// defines `ADMIN_PIN`.
+  /// Default owner PIN baked into the source. Used only when the build
+  /// does not override it with `--dart-define=ADMIN_PIN=...`.
+  /// Override at build time to rotate without touching this file.
+  ///
+  /// NOTE: any default baked into source is technically readable by
+  /// anyone who decompiles the APK. To rotate without touching this
+  /// file, build with `--dart-define=ADMIN_PIN=your-pin` and omit the
+  /// default here.
+  static const String _defaultPin = 'Atia_147258';
+
+  /// PIN injected at build time, or the source default if none.
   static const String _buildPin = String.fromEnvironment(
     'ADMIN_PIN',
-    defaultValue: '',
+    defaultValue: _defaultPin,
   );
 
   final RxBool isAdmin = false.obs;
