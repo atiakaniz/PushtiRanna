@@ -9,7 +9,7 @@ class HomeScreen extends StatelessWidget {
   HomeScreen({super.key});
 
   final RecipeController controller =
-  Get.put(RecipeController());
+  Get.find<RecipeController>();
 
   final PhoneAuthController _phone = Get.find();
 
@@ -130,6 +130,15 @@ class HomeScreen extends StatelessWidget {
               title: const Text("Favorites"),
               onTap: () {
                 Get.toNamed(AppRoutes.FAVORITE);
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.library_books),
+              title: const Text("Manage recipes"),
+              subtitle: const Text("Add, edit, or delete recipes"),
+              onTap: () {
+                Get.toNamed(AppRoutes.ADMIN_RECIPES);
               },
             ),
 

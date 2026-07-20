@@ -1,12 +1,20 @@
 import 'package:get/get.dart';
-import '../data/recipe_data.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/recipe_model.dart';
 
+/// Source of truth for the recipe list.
+///
+/// Reads from the Hive `recipes` box. The first-launch seed in `main.dart`
+/// copies the bundled recipes into the box, so anything we add/edit/delete
+/// from the admin screen survives across app restarts.
 class RecipeController extends GetxController {
-  var recipes = <RecipeModel>[].obs;
-  var searchText = ''.obs;
+  static const _boxName = 'recipes';
 
-  var selectedCategory = "All".obs;
+  Box<RecipeModel> get _box => Hive.box<RecipeModel>(_boxName);
+
+  final RxList<RecipeModel> recipes = <RecipeModel>[].obs;
+  final RxString searchText = ''.obs;
+  final RxString selectedCategory = 'All'.obs;
 
   @override
   void onInit() {
@@ -14,47 +22,69 @@ class RecipeController extends GetxController {
     loadRecipes();
   }
 
+  /// Pull every recipe currently persisted in Hive.
   void loadRecipes() {
-    recipes.value = RecipeData.recipes;
+    recipes.assignAll(_box.values);
+    if (!recipes.any((r) => r.category == selectedCategory.value) &&
+        selectedCategory.value != 'All') {
+      selectedCategory.value = 'All';
+    }
   }
 
-  // Category Filter
+  // ---------- Mutations ----------
+
+  Future<void> upsertRecipe(RecipeModel recipe) async {
+    await _box.put(recipe.id, recipe);
+    final index = recipes.indexWhere((r) => r.id == recipe.id);
+    if (index >= 0) {
+      recipes[index] = recipe;
+    } else {
+      recipes.add(recipe);
+    }
+    _reapplyFilters();
+  }
+
+  Future<void> deleteRecipe(String id) async {
+    await _box.delete(id);
+    recipes.removeWhere((r) => r.id == id);
+    _reapplyFilters();
+  }
+
+  RecipeModel? findById(String id) => _box.get(id);
+
+  // ---------- Filters ----------
+
   void filterByCategory(String category) {
     selectedCategory.value = category;
-
-    if (selectedCategory.value == "All") {
-      recipes.value = RecipeData.recipes;
-    } else {
-      recipes.value = RecipeData.recipes
-          .where((recipe) => recipe.category == selectedCategory.value)
-          .toList();
-    }
+    _reapplyFilters();
   }
 
-  // Search inside current category
   void searchRecipe(String text) {
     searchText.value = text;
+    _reapplyFilters();
+  }
 
-    List<RecipeModel> filteredRecipes;
+  void _reapplyFilters() {
+    Iterable<RecipeModel> source = _box.values;
 
-    if (selectedCategory == "All") {
-      filteredRecipes = RecipeData.recipes;
-    } else {
-      filteredRecipes = RecipeData.recipes
-          .where((recipe) => recipe.category == selectedCategory)
-          .toList();
+    if (selectedCategory.value != 'All') {
+      source = source.where((r) => r.category == selectedCategory.value);
+    }
+    if (searchText.value.isNotEmpty) {
+      final q = searchText.value.toLowerCase();
+      source = source.where((r) => r.title.toLowerCase().contains(q));
     }
 
-    if (text.isEmpty) {
-      recipes.value = filteredRecipes;
-    } else {
-      recipes.value = filteredRecipes
-          .where(
-            (recipe) => recipe.title
-            .toLowerCase()
-            .contains(text.toLowerCase()),
-      )
-          .toList();
+    recipes.assignAll(source);
+  }
+
+  /// Distinct categories present in the box, plus 'All' at the front.
+  List<String> availableCategories() {
+    final set = <String>{};
+    for (final r in _box.values) {
+      if (r.category.trim().isNotEmpty) set.add(r.category);
     }
+    final cats = set.toList()..sort();
+    return ['All', ...cats];
   }
 }

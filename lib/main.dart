@@ -9,6 +9,7 @@ import 'themes/app_theme.dart';
 import 'translations/app_translation.dart';
 import 'controllers/favorite_controller.dart';
 import 'controllers/phone_auth_controller.dart';
+import 'controllers/recipe_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ Future<void> main() async {
   // Register controllers once for the whole app (permanent).
   Get.put(FavoriteController(), permanent: true);
   Get.put(PhoneAuthController(), permanent: true);
+  Get.put(RecipeController(), permanent: true);
   runApp(const PushtiRannaApp());
 }
 

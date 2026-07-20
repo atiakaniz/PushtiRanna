@@ -9,6 +9,8 @@ import '../screens/welcome_screen.dart';
 import '../screens/phone_screen.dart';
 import '../screens/gate_screen.dart';
 import '../screens/subscription_screen.dart';
+import '../screens/admin_recipes_screen.dart';
+import '../screens/recipe_editor_screen.dart';
 
 class AppRoutes {
   static const WELCOME = '/welcome';
@@ -20,6 +22,9 @@ class AppRoutes {
   static const GATE = '/gate';
   static const PHONE = '/phone';
   static const SUBSCRIPTION = '/subscription';
+
+  static const ADMIN_RECIPES = '/admin/recipes';
+  static const RECIPE_EDITOR = '/admin/recipe-editor';
 
   static final routes = [
     GetPage(name: WELCOME, page: () => const WelcomeScreen()),
@@ -39,6 +44,8 @@ class AppRoutes {
     ),
     GetPage(name: FAVORITE, page: () => const FavoriteScreen()),
     GetPage(name: SETTINGS, page: () => const SettingsScreen()),
+    GetPage(name: ADMIN_RECIPES, page: () => const AdminRecipesScreen()),
+    GetPage(name: RECIPE_EDITOR, page: () => const RecipeEditorScreen()),
   ];
 }
 
