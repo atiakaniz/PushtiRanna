@@ -93,28 +93,12 @@ class BdappsService {
       return {'raw': raw};
     }
 
-    // bdapps returns a top-level "success": false with statusCode E1304 / E13xxx.
-    // Surface that text to the controller so it shows up in `lastError`.
-    final ok = map['success'];
-    if (ok == false) {
-      final msg = (map['message'] ??
-              map['statusDetail'] ??
-              map['statusCode'] ??
-              '$op failed')
-          .toString();
-      throw BdappsException('$op: $msg', statusCode: res.statusCode);
-    }
-
-    // statusCode "200" or 200 means OK. Anything else is an error.
-    final code = map['statusCode'];
-    if (code != null && code.toString() != '200') {
-      final msg = (map['message'] ??
-              map['statusDetail'] ??
-              '$op failed (status $code)')
-          .toString();
-      throw BdappsException(msg, statusCode: res.statusCode);
-    }
-
+    // IMPORTANT: do NOT throw on business-level codes here. bdapps returns
+    // HTTP 200 with `success: false` and a `statusCode` like E1351
+    // (already registered) or E1854 (OTP not found). Throwing in those cases
+    // makes the controller unable to inspect the payload and react (e.g.
+    // auto-route already-subscribed users to HOME). We only throw on
+    // genuine transport failures (handled above: non-2xx HTTP).
     return map;
   }
 }
