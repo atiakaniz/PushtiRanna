@@ -218,47 +218,103 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _showAdminUnlock(BuildContext context) async {
     final gate = Get.find<AdminGateController>();
-    final pinCtrl = TextEditingController();
+    // The dialog owns its own TextEditingController so it can be
+    // disposed in lockstep with the dialog widget. Disposing it from
+    // here while Get is still tearing down the dialog route causes
+    // Flutter's "dependents.isEmpty" assertion during a previous build.
+    final bodyKey = GlobalKey<_PinDialogBodyState>();
 
-    final ok = await Get.dialog<bool>(
+    final result = await Get.dialog<_PinResult>(
       AlertDialog(
         title: const Text('Owner PIN'),
-        content: TextField(
-          controller: pinCtrl,
-          autofocus: true,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: AdminGateController.hasConfiguredPin
-                ? 'Enter PIN'
-                : 'No PIN configured in this build',
-          ),
-        ),
+        content: _PinDialogBody(key: bodyKey),
         actions: [
           TextButton(
-            onPressed: () => Get.back(result: false),
+            onPressed: () => Get.back(result: null),
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Get.back(result: true),
+            onPressed: () => Get.back(
+              result: _PinResult(pin: bodyKey.currentState?.currentPin ?? ''),
+            ),
             child: const Text('Unlock'),
           ),
         ],
       ),
+      barrierDismissible: true,
     );
 
-    if (ok == true) {
-      await gate.unlock(pinCtrl.text);
-      if (gate.isAdmin.value) {
-        Get.offAllNamed(AppRoutes.ADMIN_RECIPES);
-      } else {
-        Get.snackbar(
-          'Wrong PIN',
-          'That PIN is not valid for this build.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
+    // If the user dismissed via barrier tap, Get returns null.
+    if (result == null) return;
+
+    await gate.unlock(result.pin);
+    if (gate.isAdmin.value) {
+      Get.offAllNamed(AppRoutes.ADMIN_RECIPES);
+    } else {
+      Get.snackbar(
+        'Wrong PIN',
+        'That PIN is not valid for this build.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
-    pinCtrl.dispose();
   }
+}
+
+/// State body for the admin PIN dialog. Owns its TextEditingController
+/// so disposal happens during the dialog widget's dispose(), not from
+/// the caller — that's what previously triggered the
+/// `_dependents.isEmpty` assertion.
+class _PinDialogBody extends StatefulWidget {
+  const _PinDialogBody({super.key});
+
+  @override
+  State<_PinDialogBody> createState() => _PinDialogBodyState();
+}
+
+class _PinDialogBodyState extends State<_PinDialogBody> {
+  late final TextEditingController _pinCtrl;
+
+  /// Most recently entered PIN text. The Unlock button reads this so
+  /// it can pass the value back through Get.back().
+  String currentPin = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _pinCtrl = TextEditingController();
+    _pinCtrl.addListener(() {
+      currentPin = _pinCtrl.text;
+    });
+  }
+
+  @override
+  void dispose() {
+    _pinCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _pinCtrl,
+      autofocus: true,
+      obscureText: true,
+      keyboardType: TextInputType.number,
+      // Submitting on Enter closes the dialog with the entered value.
+      onSubmitted: (value) =>
+          Get.back(result: _PinResult(pin: value)),
+      decoration: InputDecoration(
+        hintText: AdminGateController.hasConfiguredPin
+            ? 'Enter PIN'
+            : 'No PIN configured in this build',
+      ),
+    );
+  }
+}
+
+/// Returned from the PIN dialog. `pin` may be empty if the user
+/// tapped Unlock without typing anything.
+class _PinResult {
+  const _PinResult({required this.pin});
+  final String pin;
 }
