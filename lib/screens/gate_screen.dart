@@ -36,15 +36,12 @@ class _GateScreenState extends State<GateScreen> {
       return;
     }
 
-    final subscribed = await auth.checkSubscription();
-    if (!mounted) return;
-
-    if (subscribed) {
-      await auth.markSubscribed();
-      Get.offAllNamed(AppRoutes.HOME);
-    } else {
-      Get.offAllNamed(AppRoutes.SUBSCRIPTION);
-    }
+    // bdapps's `getStatus` proxy returns isSubscribed=false for some users
+    // who are clearly registered (geo-restricted upstream — verified by
+    // Postman from a different IP). Don't bounce the user to SUBSCRIPTION
+    // based on that unreliable answer alone; let SUBSCRIPTION's _sendOtp
+    // hit the E1351 path and decide authoritatively from there.
+    Get.offAllNamed(AppRoutes.SUBSCRIPTION);
   }
 
   @override

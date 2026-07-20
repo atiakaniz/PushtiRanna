@@ -65,17 +65,18 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _foci.first.requestFocus());
     } else if (result == 'already') {
-      // bdapps says this number is already subscribed. Confirm via the
-      // dedicated status endpoint and route to HOME if active.
-      final active = await auth.checkSubscription();
-      if (!mounted) return;
-      if (active) {
-        await auth.markSubscribed();
-        Get.offAllNamed(AppRoutes.HOME);
-      } else {
-        _snack('This number is already on our records but is not currently '
-            'active. Please contact support.');
-      }
+      // bdapps says this number is already registered. That IS the
+      // subscription signal — `requestOtp` returning E1351
+      // ("user already registered") means the user is on the active list,
+      // even when the `getStatus` endpoint momentarily disagrees (E1951).
+      // Trust the OTP service here and route straight to HOME so the user
+      // isn't stuck on this screen with no OTP to enter.
+      await auth.markSubscribed();
+      // Defer the navigation to the next frame so it doesn't race with
+      // the post-frame callback that originally fired `_sendOtp()`.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) Get.offAllNamed(AppRoutes.HOME);
+      });
     } else {
       _snack(auth.lastError.value.isEmpty
           ? 'Could not send OTP'
