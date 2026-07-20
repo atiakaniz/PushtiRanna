@@ -56,14 +56,26 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> _sendOtp() async {
     FocusScope.of(context).unfocus();
-    final ok = await auth.sendOtp();
+    final result = await auth.sendOtp();
     if (!mounted) return;
     _otpSent.value = true;
-    if (ok) {
+    if (result == true) {
       _snack('OTP sent to ${auth.currentPhone.value}');
       // Move focus to the first box.
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _foci.first.requestFocus());
+    } else if (result == 'already') {
+      // bdapps says this number is already subscribed. Confirm via the
+      // dedicated status endpoint and route to HOME if active.
+      final active = await auth.checkSubscription();
+      if (!mounted) return;
+      if (active) {
+        await auth.markSubscribed();
+        Get.offAllNamed(AppRoutes.HOME);
+      } else {
+        _snack('This number is already on our records but is not currently '
+            'active. Please contact support.');
+      }
     } else {
       _snack(auth.lastError.value.isEmpty
           ? 'Could not send OTP'
@@ -178,23 +190,30 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       ),
                     )),
               const SizedBox(height: 24),
-              Obx(() => SizedBox(
-                    height: 54,
-                    child: ElevatedButton(
-                      style: AuthTheme.primaryButtonStyle,
-                      onPressed: auth.isLoading.value ? null : _verify,
-                      child: auth.isLoading.value
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                color: Color(0xFF06231E),
-                              ),
-                            )
-                          : const Text('Verify'),
-                    ),
-                  )),
+              Obx(() {
+                final canVerify = auth.referenceNo.value != null &&
+                    auth.referenceNo.value!.isNotEmpty &&
+                    auth.referenceNo.value != 'null';
+                return SizedBox(
+                  height: 54,
+                  child: ElevatedButton(
+                    style: AuthTheme.primaryButtonStyle,
+                    onPressed: (auth.isLoading.value || !canVerify)
+                        ? null
+                        : _verify,
+                    child: auth.isLoading.value
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Color(0xFF06231E),
+                            ),
+                          )
+                        : const Text('Verify'),
+                  ),
+                );
+              }),
               const SizedBox(height: 18),
               Center(
                 child: TextButton(

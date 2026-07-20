@@ -81,8 +81,15 @@ class PhoneAuthController extends GetxController {
     lastError.value = '';
     try {
       final data = await BdappsService.checkSubscription(_forApi(phone));
+      debugPrint('[PhoneAuth] checkSubscription response: $data');
       final v = data['isSubscribed'];
-      return v == true || v == 'true';
+      final active = v == true || v == 'true';
+      if (active) {
+        await markSubscribed();
+      } else {
+        await markUnsubscribed();
+      }
+      return active;
     } on BdappsException catch (e) {
       lastError.value = e.message;
       return false;
@@ -95,7 +102,14 @@ class PhoneAuthController extends GetxController {
   }
 
   /// Sends a 6-digit OTP. Stores the `referenceNo` for the next step.
-  Future<bool> sendOtp() async {
+  ///
+  /// Returns one of:
+  ///   * `true`  — OTP issued, `referenceNo` stored, call [verifyOtp] next.
+  ///   * `false` — hard failure; `lastError` is set.
+  ///   * `'already'` — server says the number is already registered (E1351 /
+  ///     `user already registered`). No `referenceNo` will be issued; the
+  ///     caller should check subscription and proceed to HOME if active.
+  Future<Object> sendOtp() async {
     final phone = currentPhone.value;
     if (phone.isEmpty) {
       lastError.value = 'No phone number saved';
@@ -117,19 +131,27 @@ class PhoneAuthController extends GetxController {
           ? rawRef
           : null;
 
-      // Also surface business-level statusCode payloads (e.g. E1351).
       final code = data['statusCode']?.toString().toUpperCase();
-      final isBusinessFail = code != null &&
-          code != '200' &&
-          code != 'S1000' &&
-          code != 'OK' &&
-          code != 'SUCCESS';
+      final detail = (data['statusDetail'] ?? data['message'] ?? '')
+          .toString()
+          .toLowerCase();
+
+      // Already-subscribed detection: bdapps returns E1351 with
+      // "user already registered" / "already registered" / "subscribed".
+      final alreadyRegistered = code == 'E1351' ||
+          detail.contains('already registered') ||
+          detail.contains('already subscribed') ||
+          detail.contains('user registered');
+
       if (ref == null) {
-        final detail = isBusinessFail
-            ? (data['statusDetail'] ?? data['message'] ?? code ?? 'unknown')
-                .toString()
-            : 'No reference number returned';
-        lastError.value = detail;
+        if (alreadyRegistered) {
+          // Don't surface this as a hard error — the user is simply already
+          // on the subscription list. Caller will hit checkSubscription.
+          return 'already';
+        }
+        lastError.value = detail.isNotEmpty
+            ? detail
+            : 'No reference number returned (status ${code ?? 'unknown'})';
         return false;
       }
 
