@@ -19,7 +19,7 @@ The page ships with friendly placeholders so it looks fine even without assets. 
 | File | Size (suggested) | Used in | If missing |
 |---|---|---|---|
 | `hero_phone.png` | 600×1200 | Hero phone mockup | Placeholder shown |
-| `preview_home.png` | 600×1200 | Recipe list screenshot | Placeholder shown |
+| `preview_home.png` | 600×1200 | (optional) home preview | **Built-in CSS preview already shown** — drop PNG only if you want a real screenshot |
 | `preview_detail.png` | 600×1200 | Recipe detail screenshot | Placeholder shown |
 | `preview_search.png` | 600×1200 | Search/favorites screenshot | Placeholder shown |
 | `cat_breakfast.jpg` | 800×600 | Category tile | Placeholder shown |
