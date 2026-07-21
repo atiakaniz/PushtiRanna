@@ -308,6 +308,35 @@ code {
   font-size: 0.85em;
 }
 
+/* Recipe preview phones: full-bleed screenshot inside the frame */
+.phone-dark .phone-screen > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 28px;
+  display: block;
+}
+.phone-dark .phone-screen .phone-fallback {
+  display: none;
+  position: absolute;
+  inset: 8px;
+  border-radius: 28px;
+  background: repeating-linear-gradient(45deg, #f3f8f5 0 12px, #e9f2ec 12px 24px);
+  border: 2px dashed #b8d4c1;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--green-700);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.phone-dark .phone-screen .phone-fallback .ph-label code {
+  background: transparent;
+  color: var(--green-700);
+  padding: 0;
+  font-size: 0.85em;
+}
+
 /* ---------- Generic Section ---------- */
 .section {
   padding: 72px 0;
