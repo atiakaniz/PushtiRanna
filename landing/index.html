@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PushtiRanna — a Bengali-first healthy recipe app. Discover balanced Bengali meals, mark favorites, and cook with confidence.">
+  <meta name="theme-color" content="#0f6b3a">
+
+  <title>PushtiRanna — সুস্থ থাকুন, পুষ্টিকর রান্নার সাথে</title>
+
+  <link rel="icon" type="image/jpeg" href="images/app_icon.jpg">
+  <link rel="apple-touch-icon" href="images/app_icon.jpg">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ============== HEADER ============== -->
+  <header class="site-header" id="top">
+    <div class="container nav">
+      <a class="brand" href="#top" aria-label="PushtiRanna home">
+        <img src="images/app_icon.jpg" alt="" class="brand-mark">
+        <span class="brand-name">PushtiRanna</span>
+      </a>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-controls="primaryNav" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="nav-links" id="primaryNav" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#categories">Categories</a>
+        <a href="#how">How it works</a>
+        <a href="#pricing">Pricing</a>
+        <a class="btn btn-ghost btn-sm" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">Download</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ============== HERO ============== -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">🇧🇩 Made for Bangladesh</span>
+        <h1>
+          <span class="bn">সুস্থ থাকুন, পুষ্টিকর রান্নার সাথে</span>
+          <span class="en">Healthier Bengali Recipes, Every Day</span>
+        </h1>
+        <p class="lede">
+          Discover balanced Bengali meals — breakfast, lunch, dinner, salads, soups, and healthy non-veg.
+          Search by name, save favorites, and start cooking with confidence.
+        </p>
+
+        <p class="price-line">
+          Charging: <strong>2.78 BDT</strong> including (Vat+SC+SD)
+          <br>
+          <span class="muted">For Robi and Airtel Users only.</span>
+        </p>
+
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+            ⬇ Download APK
+          </a>
+          <a class="btn btn-secondary" href="#features">Learn more</a>
+        </div>
+
+        <p class="hero-meta">📱 Android · No account · Works offline</p>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <!-- Placeholder slot: drop your phone mockup PNG here -->
+        <div class="phone-frame placeholder">
+          <span class="ph-label">Drop your phone mockup here<br><code>images/hero_phone.png</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== KEY FEATURES ============== -->
+  <section class="section" id="features">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">🌿 Health-first</span>
+        <h2>Key Features</h2>
+        <p>Everything you need to cook Bengali meals that love you back.</p>
+      </header>
+
+      <div class="grid grid-4">
+        <article class="card reveal">
+          <div class="card-ico">🥗</div>
+          <h3>Health-Focused Recipes</h3>
+          <p>Balanced, nutrition-aware Bengali dishes for everyday cooking.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">🍛</div>
+          <h3>Bengali Cuisine</h3>
+          <p>শুক্তো, ভর্তা, সবজি, মাছ, মাংস — familiar flavors, made healthy.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">📡</div>
+          <h3>Offline Friendly</h3>
+          <p>No server round-trips — recipes and favorites are stored on-device.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">🪶</div>
+          <h3>Data Light</h3>
+          <p>Lightweight APK designed for Bangladeshi internet speeds.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== RECIPES PREVIEW (3 PHONES) ============== -->
+  <section class="section section-alt" id="preview">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">📱 App preview</span>
+        <h2>Cook with confidence</h2>
+        <p>Browse, search, and bookmark — all in one screen.</p>
+      </header>
+
+      <div class="phones-grid">
+        <div class="phone-frame placeholder phone-sm reveal">
+          <span class="ph-label">Home / recipe list<br><code>preview_home.png</code></span>
+        </div>
+        <div class="phone-frame placeholder phone-sm reveal">
+          <span class="ph-label">Recipe detail<br><code>preview_detail.png</code></span>
+        </div>
+        <div class="phone-frame placeholder phone-sm reveal">
+          <span class="ph-label">Search & favorites<br><code>preview_search.png</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CATEGORIES ============== -->
+  <section class="section" id="categories">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">🍽 Recipe library</span>
+        <h2>What you'll cook</h2>
+        <p>50+ Bengali recipes across six categories — pick your mood.</p>
+      </header>
+
+      <div class="grid grid-3 cat-grid">
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_breakfast.jpg')">
+            <span class="ph-label">cat_breakfast.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🌅 Breakfast</h3>
+            <p>Khichuri, paratha, oats, smoothies &amp; more.</p>
+          </div>
+        </a>
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_lunch.jpg')">
+            <span class="ph-label">cat_lunch.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🍱 Lunch</h3>
+            <p>Rice, dal, shak, bhorta — everyday balanced plates.</p>
+          </div>
+        </a>
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_dinner.jpg')">
+            <span class="ph-label">cat_dinner.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🌙 Dinner</h3>
+            <p>Light, warm dinners that won't weigh you down.</p>
+          </div>
+        </a>
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_salad.jpg')">
+            <span class="ph-label">cat_salad.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🥗 Salads</h3>
+            <p>Beet, corn, sprout &amp; yogurt-based fresh bowls.</p>
+          </div>
+        </a>
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_soup.jpg')">
+            <span class="ph-label">cat_soup.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🍲 Soups</h3>
+            <p>Moong, lentil, chicken &amp; sweet corn — warm comfort.</p>
+          </div>
+        </a>
+
+        <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <div class="cat-img" style="background-image:url('images/cat_nonveg.jpg')">
+            <span class="ph-label">cat_nonveg.jpg</span>
+          </div>
+          <div class="cat-meta">
+            <h3>🍗 Healthy Non-Veg</h3>
+            <p>Grilled chicken, fish stew, egg curry — lean &amp; clean.</p>
+          </div>
+        </a>
+
+      </div>
+
+      <p class="muted small center">
+        ↑ Category preview tiles — they'll auto-fill once you drop JPGs named
+        <code>cat_breakfast.jpg</code>, <code>cat_lunch.jpg</code>, <code>cat_dinner.jpg</code>,
+        <code>cat_salad.jpg</code>, <code>cat_soup.jpg</code>, <code>cat_nonveg.jpg</code>
+        into <code>landing/images/</code>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============== WHY PUSHTIRANNA ============== -->
+  <section class="section section-alt" id="why">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">💚 Why PushtiRanna</span>
+        <h2>Built for Bengali kitchens</h2>
+        <p>Familiar flavors, modern nutrition.</p>
+      </header>
+
+      <div class="grid grid-4">
+        <article class="card reveal">
+          <div class="card-ico">🇧🇩</div>
+          <h3>100% Bengali Content</h3>
+          <p>Recipes written in your language — both English and বাংলা.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">🚫</div>
+          <h3>No Clutter</h3>
+          <p>No ads, no sign-ups, no accounts — just recipes you can cook.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">📱</div>
+          <h3>Simple &amp; Clean</h3>
+          <p>Minimalist UI focused on what matters — your next meal.</p>
+        </article>
+
+        <article class="card reveal">
+          <div class="card-ico">⚡</div>
+          <h3>Optimized for Bangladesh</h3>
+          <p>Lightweight, fast, and friendly to local data plans.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== HOW IT WORKS ============== -->
+  <section class="section" id="how">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">🧭 How it works</span>
+        <h2>Start cooking in 3 steps</h2>
+      </header>
+
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step-num">1</span>
+          <h3>Install the App</h3>
+          <p>Download the APK using your mobile data or Wi-Fi.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-num">2</span>
+          <h3>Subscribe &amp; Sign In</h3>
+          <p>Verify your phone number once — no password, no OTP server, no account.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step-num">3</span>
+          <h3>Cook &amp; Save</h3>
+          <p>Browse recipes, favorite the ones you love, and start cooking.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============== PRICING ============== -->
+  <section class="section section-alt" id="pricing">
+    <div class="container">
+      <header class="section-head">
+        <span class="kicker">💳 Pricing</span>
+        <h2>Simple, pay-as-you-go</h2>
+      </header>
+
+      <div class="pricing-card reveal">
+        <h3>PushtiRanna Subscription</h3>
+        <div class="price">
+          <span class="amount">2.78</span>
+          <span class="currency">BDT / day</span>
+        </div>
+        <p class="muted">Charging: 2.78 BDT including (Vat+SC+SD)</p>
+        <ul class="bullets">
+          <li>Unlimited access to the recipe library</li>
+          <li>Offline favorites &amp; bookmarks</li>
+          <li>English + বাংলা translations</li>
+          <li>No ads, no upsells</li>
+        </ul>
+        <p class="disclaimer">
+          Subscription is charged through your mobile carrier.
+          <strong>For Robi and Airtel users only.</strong>
+        </p>
+        <a class="btn btn-primary btn-block" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          Download APK
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== FINAL CTA ============== -->
+  <section class="cta">
+    <div class="container cta-inner">
+      <h2>Start eating healthier today</h2>
+      <p>Join thousands of home cooks cooking balanced Bengali meals with PushtiRanna.</p>
+      <a class="btn btn-primary btn-lg" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+        ⬇ Download APK
+      </a>
+      <img class="cta-mark" src="images/app_icon.jpg" alt="PushtiRanna">
+    </div>
+  </section>
+
+  <!-- ============== FOOTER ============== -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="foot-brand">
+        <img src="images/app_icon.jpg" alt="" class="foot-mark">
+        <h3>PushtiRanna</h3>
+        <p>সুস্থ থাকুন, পুষ্টিকর রান্নার সাথে — your Bengali health-recipe companion.</p>
+      </div>
+
+      <div class="foot-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#categories">Categories</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>App</h4>
+        <ul>
+          <li><a href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">Download APK</a></li>
+          <li><a href="#features">Screenshots</a></li>
+        </ul>
+      </div>
+
+      <div class="foot-col">
+        <h4>Disclaimer</h4>
+        <p class="small">
+          PushtiRanna is a recipe companion — not a substitute for medical advice.
+          Subscription charged via your mobile operator.
+        </p>
+      </div>
+    </div>
+
+    <div class="foot-bottom">
+      <div class="container foot-bottom-row">
+        <span>© 2026 PushtiRanna. All rights reserved.</span>
+        <span>Made with ❤️ in 🇧🇩</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js" defer></script>
+</body>
+</html>
