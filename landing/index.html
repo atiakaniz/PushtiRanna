@@ -73,9 +73,14 @@
       </div>
 
       <div class="hero-art" aria-hidden="true">
-        <!-- Drop your hero phone PNG here when ready; placeholder shown meanwhile -->
-        <div class="phone-frame placeholder">
-          <span class="ph-label">Drop your phone mockup here<br><code>images/hero_phone.png</code></span>
+        <!-- If images/hero_phone.png exists the browser shows it; otherwise the
+             placeholder hatched frame is shown via the <noscript>/fallback below. -->
+        <div class="phone-frame hero-phone">
+          <img src="images/hero_phone.png" alt="PushtiRanna app preview"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div class="phone-fallback">
+            <span class="ph-label">Drop your phone mockup here<br><code>images/hero_phone.png</code></span>
+          </div>
         </div>
       </div>
     </div>
