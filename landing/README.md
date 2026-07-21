@@ -5,8 +5,9 @@ Static landing site for **PushtiRanna** — Bengali-first healthy recipes. Pure 
 ```
 landing/
 ├── index.html        # the landing page
-├── css/style.css     # design system + responsive layout
+├── css/style.css     # design system + responsive layout + modal styles
 ├── js/script.js      # nav toggle, smooth scroll, reveal-on-scroll
+├── js/subscribe.js   # 3-step subscribe modal (phone → OTP → success)
 ├── images/           # drop your assets here (see below)
 ├── manifest.json     # PWA manifest (optional)
 └── README.md         # this file
@@ -89,6 +90,54 @@ If your operator changes the rate or adds other carriers, edit:
 - **Brand colors** → `css/style.css` `:root` block (`--green-700`, `--gold-500`, etc.)
 - **Tagline** → `index.html` hero `<h1>`
 - **Footer** → `index.html` `.site-footer` (email/contact columns removed per request)
+
+## Subscribe modal (`js/subscribe.js`)
+
+The `Subscribe` buttons in the header, hero, and final CTA open a 3-step modal that mirrors the Flutter app's `PhoneAuthController` flow against the same bdapps PHP endpoints — no app install needed.
+
+### Flow
+
+1. **Phone** — User enters an 11-digit BD mobile (`01XXXXXXXXX`). Submit hits `POST send_otp.php`.
+2. **OTP** — 6-digit code, auto-advancing inputs with paste support. Submit hits `POST verify_otp.php`.
+3. **Success** — Confetti-free checkmark, CTA back to the APK download.
+
+### Endpoints used
+
+| Action | Endpoint | Body |
+|---|---|---|
+| Request OTP | `POST https://pushtiranna.nestorabyatia.xyz/send_otp.php` | `user_mobile` |
+| Verify OTP | `POST https://pushtiranna.nestorabyatia.xyz/verify_otp.php` | `user_mobile`, `Otp`, `referenceNo` |
+| Re-check status (silent, on page load) | `POST https://pushtiranna.nestorabyatia.xyz/check_subscription.php` | `user_mobile` |
+
+All three endpoints return CORS-enabled JSON, so no proxy is needed.
+
+### State persistence
+
+The browser remembers the subscription so the user doesn't see the modal again:
+
+| Key | Storage | Lifetime | Purpose |
+|---|---|---|---|
+| `pushtiranna_phone` | `localStorage` | Until cache cleared | Phone number (source of truth for header badge) |
+| `pushtiranna_subscribed` | `localStorage` | Until cache cleared | `"1"` if verified subscribed |
+| `pushtiranna_ref` | `sessionStorage` | Tab session only | bdapps reference number for OTP verification |
+
+On every page load, if a phone is cached, `subscribe.js` re-checks `check_subscription.php` in the background. If the server reports `isSubscribed: false`, the local cache is cleared.
+
+### Edge cases handled
+
+- **E1351** (already registered) on `send_otp.php` — auto-skips to the success step. The bdapps server is the source of truth.
+- **E1854** (OTP expired/invalid) — clears the OTP inputs and shows a "Tap Resend" message.
+- **E1951** (geo-restricted) — friendly regional message; user should retry from BD.
+- **Network errors** — caught per request, shown inline, flow stays on the current step so the user can retry without losing input.
+- **Session expiry mid-flow** (no `referenceNo`) — auto-routes back to the phone step.
+
+### Header badge
+
+Once subscribed, every `.subscribe-btn` in the header / hero / CTA updates to:
+
+> ✓ Subscribed (last 4 digits of phone)
+
+The badge is a click affordance — tapping still opens the modal in case the user wants to change their number or re-verify.
 
 ## License
 

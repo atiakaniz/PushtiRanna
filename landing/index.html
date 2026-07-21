@@ -37,7 +37,7 @@
         <a href="#categories">Categories</a>
         <a href="#how">How it works</a>
         <a href="#pricing">Pricing</a>
-        <a class="btn btn-ghost btn-sm" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">Download</a>
+        <button type="button" class="btn btn-ghost btn-sm subscribe-btn" data-subscribe-open>Subscribe</button>
       </nav>
     </div>
   </header>
@@ -63,10 +63,12 @@
         </p>
 
         <div class="hero-ctas">
-          <a class="btn btn-primary" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          <button type="button" class="btn btn-primary subscribe-btn" data-subscribe-open>
+            ✨ Subscribe — 2.78 BDT/day
+          </button>
+          <a class="btn btn-secondary" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
             ⬇ Download APK
           </a>
-          <a class="btn btn-secondary" href="#features">Learn more</a>
         </div>
 
         <p class="hero-meta">📱 Android · No account · Works offline</p>
@@ -183,9 +185,7 @@
       <div class="grid grid-3 cat-grid">
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_breakfast.jpg')">
-            <span class="ph-label">cat_breakfast.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_breakfast.jpg')"></div>
           <div class="cat-meta">
             <h3>🌅 Breakfast</h3>
             <p>Khichuri, paratha, oats, smoothies &amp; more.</p>
@@ -193,9 +193,7 @@
         </a>
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_lunch.jpg')">
-            <span class="ph-label">cat_lunch.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_lunch.jpg')"></div>
           <div class="cat-meta">
             <h3>🍱 Lunch</h3>
             <p>Rice, dal, shak, bhorta — everyday balanced plates.</p>
@@ -203,9 +201,7 @@
         </a>
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_dinner.jpg')">
-            <span class="ph-label">cat_dinner.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_dinner.jpg')"></div>
           <div class="cat-meta">
             <h3>🌙 Dinner</h3>
             <p>Light, warm dinners that won't weigh you down.</p>
@@ -213,9 +209,7 @@
         </a>
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_salad.jpg')">
-            <span class="ph-label">cat_salad.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_salad.jpg')"></div>
           <div class="cat-meta">
             <h3>🥗 Salads</h3>
             <p>Beet, corn, sprout &amp; yogurt-based fresh bowls.</p>
@@ -223,9 +217,7 @@
         </a>
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_soup.jpg')">
-            <span class="ph-label">cat_soup.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_soup.jpg')"></div>
           <div class="cat-meta">
             <h3>🍲 Soups</h3>
             <p>Moong, lentil, chicken &amp; sweet corn — warm comfort.</p>
@@ -233,9 +225,7 @@
         </a>
 
         <a class="cat-tile reveal" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-          <div class="cat-img" style="background-image:url('images/cat_nonveg.jpg')">
-            <span class="ph-label">cat_nonveg.jpg</span>
-          </div>
+          <div class="cat-img" style="background-image:url('images/cat_nonveg.jpg')"></div>
           <div class="cat-meta">
             <h3>🍗 Healthy Non-Veg</h3>
             <p>Grilled chicken, fish stew, egg curry — lean &amp; clean.</p>
@@ -245,10 +235,7 @@
       </div>
 
       <p class="muted small center">
-        ↑ Category preview tiles — they'll auto-fill once you drop JPGs named
-        <code>cat_breakfast.jpg</code>, <code>cat_lunch.jpg</code>, <code>cat_dinner.jpg</code>,
-        <code>cat_salad.jpg</code>, <code>cat_soup.jpg</code>, <code>cat_nonveg.jpg</code>
-        into <code>landing/images/</code>.
+        ↑ Categories with hand-picked dishes from each section of PushtiRanna's recipe library.
       </p>
     </div>
   </section>
@@ -355,9 +342,15 @@
     <div class="container cta-inner">
       <h2>Start eating healthier today</h2>
       <p>Join thousands of home cooks cooking balanced Bengali meals with PushtiRanna.</p>
-      <a class="btn btn-primary btn-lg" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
-        ⬇ Download APK
-      </a>
+      <div class="cta-row">
+        <button type="button" class="btn btn-primary btn-lg subscribe-btn" data-subscribe-open>
+          ✨ Subscribe — 2.78 BDT/day
+        </button>
+        <a class="btn btn-secondary btn-lg" style="background:transparent;color:#fff;border-color:rgba(255,255,255,0.4)"
+           href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+          ⬇ Download APK
+        </a>
+      </div>
       <img class="cta-mark" src="images/app_icon.jpg" alt="PushtiRanna">
     </div>
   </section>
@@ -407,5 +400,118 @@
   </footer>
 
   <script src="js/script.js" defer></script>
+  <script src="js/subscribe.js" defer></script>
+
+  <!-- ============== SUBSCRIBE MODAL ============== -->
+  <div class="modal" id="subscribeModal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="subscribeTitle">
+    <div class="modal-overlay" data-subscribe-close></div>
+    <div class="modal-card" role="document">
+
+      <button type="button" class="modal-close" aria-label="Close" data-subscribe-close>×</button>
+
+      <!-- ===== Step 1: Phone ===== -->
+      <section class="step-pane is-active" data-step="phone">
+        <header class="modal-head">
+          <span class="modal-eyebrow">📲 Subscribe to PushtiRanna</span>
+          <h2 id="subscribeTitle">Enter your phone number</h2>
+          <p>We'll send a 6-digit code via SMS to verify your subscription.</p>
+        </header>
+
+        <form class="modal-form" id="phoneForm" novalidate>
+          <label class="field">
+            <span class="field-label">Mobile number</span>
+            <div class="phone-input">
+              <span class="phone-prefix">+880</span>
+              <input type="tel"
+                     inputmode="numeric"
+                     autocomplete="tel"
+                     maxlength="10"
+                     pattern="1[3-9][0-9]{8}"
+                     placeholder="1XXXXXXXXX"
+                     id="phoneInput"
+                     required>
+            </div>
+            <small class="field-hint">Format: 01XXXXXXXXX (Robi / Airtel only)</small>
+          </label>
+
+          <div class="price-tag">
+            <strong>2.78 BDT/day</strong> including (Vat+SC+SD)
+            <small>For Robi and Airtel users only · charged via your mobile operator</small>
+          </div>
+
+          <p class="modal-error" data-error hidden></p>
+
+          <button type="submit" class="btn btn-primary btn-block" data-action="send-otp">
+            <span class="btn-label">Send OTP</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+
+          <p class="modal-foot muted small">
+            By subscribing you agree to daily charges via your mobile operator. Manage anytime in app settings.
+          </p>
+        </form>
+      </section>
+
+      <!-- ===== Step 2: OTP ===== -->
+      <section class="step-pane" data-step="otp" hidden>
+        <header class="modal-head">
+          <span class="modal-eyebrow">🔐 Verify</span>
+          <h2>Enter the 6-digit code</h2>
+          <p>Sent to <strong data-display-phone>your number</strong>. Didn't get it?
+            <button type="button" class="link-btn" data-action="resend">Resend</button>
+          </p>
+        </header>
+
+        <form class="modal-form" id="otpForm" novalidate>
+          <div class="otp-grid" id="otpGrid" role="group" aria-label="One-time password">
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 1" required>
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 2" required>
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 3" required>
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 4" required>
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 5" required>
+            <input type="tel" inputmode="numeric" maxlength="1" class="otp-cell" data-otp-cell aria-label="Digit 6" required>
+          </div>
+
+          <p class="modal-error" data-error hidden></p>
+
+          <button type="submit" class="btn btn-primary btn-block" data-action="verify-otp" disabled>
+            <span class="btn-label">Verify</span>
+            <span class="btn-spinner" hidden></span>
+          </button>
+
+          <p class="modal-foot">
+            <button type="button" class="link-btn" data-action="back-to-phone">← Change number</button>
+          </p>
+        </form>
+      </section>
+
+      <!-- ===== Step 3: Success ===== -->
+      <section class="step-pane" data-step="success" hidden>
+        <div class="success-state">
+          <div class="success-check" aria-hidden="true">
+            <svg viewBox="0 0 52 52" width="56" height="56">
+              <circle cx="26" cy="26" r="24" fill="none" stroke="#1f7a3e" stroke-width="3"/>
+              <path d="M14 27 l8 8 l16 -18" fill="none" stroke="#1f7a3e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2>You're subscribed!</h2>
+          <p>Welcome to PushtiRanna, <strong data-display-phone>friend</strong>. Enjoy unlimited access to all Bengali recipes.</p>
+
+          <div class="success-actions">
+            <a class="btn btn-primary" href="https://pushtiranna.nestorabyatia.xyz/pushti_ranna.apk">
+              ⬇ Download APK
+            </a>
+            <button type="button" class="btn btn-secondary" data-subscribe-close>Start exploring</button>
+          </div>
+
+          <p class="muted small">
+            Need to cancel? Open the app → Settings → Unsubscribe.
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
 </body>
 </html>
