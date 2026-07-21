@@ -16,8 +16,25 @@
   };
   const STORAGE_PHONE = 'pushtiranna_phone';
   const STORAGE_SUB   = 'pushtiranna_subscribed';
-  const PHONE_REGEX   = /^01[3-9][0-9]{8}$/;         // 11-digit BD mobile
+  const PHONE_REGEX   = /^01[3-9][0-9]{8}$/;         // 11-digit BD mobile (01XXXXXXXXX)
   const DISPLAY_FMT   = (p) => `+880 ${p.slice(1, 5)}-${p.slice(5)}`;
+
+  /**
+   * Accept any of these user-entered forms and return the canonical
+   * 11-digit `01XXXXXXXXX`, or null if the input isn't valid:
+   *   1XXXXXXXXX                       (10 digits — what the input field gives us)
+   *   01XXXXXXXXX                      (11 digits — local format)
+   *   8801XXXXXXXXX / +8801XXXXXXXXX   (13 digits with country code)
+   */
+  function normalizePhone(digits) {
+    if (!digits) return null;
+    let d = digits.replace(/\D/g, '');
+    // Strip leading 880 (country code)
+    if (d.startsWith('880') && d.length === 13) d = d.slice(3);
+    // Prepend leading 0 if user typed the local 10-digit form
+    if (d.length === 10 && d.startsWith('1')) d = '0' + d;
+    return PHONE_REGEX.test(d) ? d : null;
+  }
 
   // ---------- Element refs ----------
   const els = {};
@@ -76,6 +93,18 @@
     els.phoneForm.addEventListener('submit', (e) => {
       e.preventDefault();
       handleSendOtp();
+    });
+
+    // Strip non-digits live + auto-prepend leading 0 if user pastes full 11-digit form
+    els.phoneInput.addEventListener('input', () => {
+      const digits = els.phoneInput.value.replace(/\D/g, '');
+      // If they paste/type 11 digits starting with 0, show the local 10-digit form
+      // (the +880 chip handles the country code visually)
+      const trimmed = digits.startsWith('0') && digits.length === 11
+        ? digits.slice(1)
+        : digits;
+      els.phoneInput.value = trimmed.slice(0, 11); // allow up to 11 while editing
+      clearErrors();
     });
 
     // OTP inputs — auto-advance, focus mgmt, paste
@@ -153,8 +182,10 @@
   // ---------- Phone step ----------
   async function handleSendOtp() {
     const raw = (els.phoneInput.value || '').replace(/\D/g, '');
-    if (!PHONE_REGEX.test(raw)) {
-      showError(els.phoneError, 'Please enter a valid Bangladeshi mobile number (e.g. 01712345678).');
+    const normalized = normalizePhone(raw);
+    if (!normalized) {
+      showError(els.phoneError,
+        'Please enter a valid Bangladeshi mobile number (e.g. 01712345678).');
       els.phoneInput.focus();
       return;
     }
@@ -163,7 +194,7 @@
     clearErrors();
 
     try {
-      const res = await postForm(ENDPOINTS.sendOtp, { user_mobile: raw });
+      const res = await postForm(ENDPOINTS.sendOtp, { user_mobile: normalized });
       const data = await res.json().catch(() => ({}));
 
       // ----- Error paths -----
@@ -176,8 +207,8 @@
       const detail = (data.statusDetail || data.detail || '').toString();
 
       if (code === 'E1351' || /already\s*(registered|subscribed)/i.test(detail)) {
-        markSubscribed(raw);
-        showPhone(raw);
+        markSubscribed(normalized);
+        showPhone(normalized);
         goToStep('success');
         return;
       }
@@ -191,7 +222,7 @@
       // Happy path
       if (data.referenceNo || code === 'S1000' || data.success) {
         referenceNo(data.referenceNo);
-        showPhone(raw);
+        showPhone(normalized);
         goToStep('otp');
         setTimeout(() => els.otpCells[0]?.focus(), 80);
         return;
@@ -199,7 +230,7 @@
 
       // Fallback: assume success and try to verify
       referenceNo(data.referenceNo);
-      showPhone(raw);
+      showPhone(normalized);
       goToStep('otp');
     } catch (err) {
       console.error('[sendOtp]', err);
@@ -212,12 +243,13 @@
 
   async function handleResend() {
     const phone = (els.displayPhone.textContent || '').replace(/\D/g, '');
-    if (!PHONE_REGEX.test(phone)) {
+    const normalized = normalizePhone(phone);
+    if (!normalized) {
       goToStepPhone();
       return;
     }
-    // Re-trigger send flow
-    els.phoneInput.value = phone.startsWith('1') ? phone : phone.slice(2);
+    // Re-trigger send flow with the local 10-digit form (input field strips leading 0)
+    els.phoneInput.value = normalized.slice(1);
     await handleSendOtp();
   }
 
