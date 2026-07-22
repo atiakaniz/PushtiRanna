@@ -45,34 +45,35 @@ python -m http.server 8080
 
 ## Deploy to cPanel (alongside your PHP proxy)
 
-The landing page lives **next to** your existing `pushtiranna` directory — they don't conflict. When you're ready, upload the **contents of `landing/`** (not the `landing/` folder itself) to a new directory on cPanel, for example:
+The landing page sits at the **document root** of the `pushtiranna.nestorabyatia.xyz` subdomain, next to your PHP endpoints — same folder, no subdirectory. When you're ready, upload the **contents of `landing/`** (not the `landing/` folder itself) to:
 
 ```
-public_html/pushtiranna-landing/
-├── index.html
-├── css/
-├── js/
-└── images/
+public_html/pushtiranna.nestorabyatia.xyz/
+├── index.html              ← landing (served at https://pushtiranna.nestorabyatia.xyz/)
+├── css/style.css
+├── js/script.js
+├── js/subscribe.js
+├── images/                 ← all PNG/JPG assets
+├── manifest.json
+├── send_otp.php            ← existing backend (sibling of the landing)
+├── verify_otp.php
+├── check_subscription.php
+└── app_apk/pushti_ranna.apk  ← existing APK
 ```
 
-Landing URL will then be:
+Landing URL:
 
 ```
-https://pushtiranna.nestorabyatia.xyz/pushtiranna-landing/
+https://pushtiranna.nestorabyatia.xyz/
 ```
+
+The HTML uses **relative** paths for CSS/JS/images and **absolute** paths for the PHP endpoints and APK download. So as long as the four landing files (`index.html`, `css/`, `js/`, `images/`) live at the document root, everything works.
 
 ### Checklist
-- [ ] Upload `index.html`, `css/`, `js/`
-- [ ] Upload `images/` **after** dropping in the PNG/JPGs from the table above
-- [ ] In cPanel → File Manager, ensure the directory has no `index.html` from another path blocking it
-- [ ] Enable AutoSSL on `pushtiranna.nestorabyatia.xyz` (HTTPS) if not already
-- [ ] (Optional) Add `manifest.json` PWA support for "Add to Home Screen"
-
-### Why a separate folder?
-Keeping the marketing page separate from the Flutter `web/` build means:
-- Future Flutter builds won't clobber it
-- You can edit copy/images freely without re-running `flutter build web`
-- `images/` is isolated from the app's `assets/`
+- [ ] Upload `index.html`, `css/`, `js/`, `images/`, `manifest.json` to the document root
+- [ ] If there's an old `index.html` (a `hi` test file, etc.) at the root, delete or rename it so the landing one takes over
+- [ ] Ensure the `css/`, `js/`, `images/` folder names are **lowercase** — Linux is case-sensitive
+- [ ] Enable AutoSSL on `pushtiranna.nestorabyatia.xyz` (HTTPS) so Subscribe modal works without mixed-content blocking
 
 ## Pricing & subscription copy
 
