@@ -32,6 +32,36 @@
   --font-bn: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
 }
 
+/* ---------- Dark theme overrides ----------
+   Only the variables that drive surfaces, text, and accents change.
+   Layout/typography untouched. */
+:root[data-theme="dark"] {
+  --green-900: #d8f5e3;
+  --green-700: #4ade80;
+  --green-600: #22c55e;
+  --green-100: #0e2f1f;
+  --gold-500:  #fbbf24;
+  --gold-100:  #2a200a;
+  --ink-900:   #e8f1ea;
+  --ink-700:   #c2cfc7;
+  --ink-500:   #8b9a92;
+  --line:      #1f2e26;
+  --bg:        #0a1612;
+  --bg-alt:    #0f2018;
+  --white:     #142019;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow:    0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* Smooth theme transitions */
+html { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+body, .card, .cat-tile, .btn, .modal-card, .modal-overlay, input, .phone-input {
+  transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+
 /* ---------- Reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
@@ -103,7 +133,7 @@ code {
 }
 .btn-primary:hover { background: var(--green-900); }
 .btn-secondary {
-  background: #fff;
+  background: var(--white);
   color: var(--green-900);
   border-color: var(--line);
 }
@@ -370,7 +400,7 @@ code {
 .grid-4 { grid-template-columns: repeat(4, 1fr); }
 
 .card {
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 24px;
@@ -442,7 +472,7 @@ code {
   display: block;
   width: 14px;
   height: 2px;
-  background: #fff;
+  background: var(--white);
   border-radius: 2px;
 }
 .app-logo {
@@ -575,7 +605,7 @@ code {
 /* ---------- Category tiles ---------- */
 .cat-grid { gap: 26px; }
 .cat-tile {
-  background: #fff;
+  background: var(--white);
   border-radius: var(--radius);
   overflow: hidden;
   border: 1px solid var(--line);
@@ -609,7 +639,7 @@ code {
   counter-reset: step;
 }
 .step {
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 28px 24px;
@@ -636,7 +666,7 @@ code {
 .pricing-card {
   max-width: 520px;
   margin: 0 auto;
-  background: #fff;
+  background: var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   padding: 36px 28px;
@@ -715,7 +745,7 @@ code {
 .cta h2 { color: #fff; font-size: clamp(1.8rem, 3.5vw, 2.4rem); }
 .cta p { color: rgba(255,255,255,0.85); max-width: 560px; margin: 0 auto 24px; }
 .cta .btn-primary {
-  background: #fff;
+  background: var(--white);
   color: var(--green-900);
 }
 .cta .btn-primary:hover { background: var(--gold-100); }
@@ -729,7 +759,7 @@ code {
 
 /* ---------- Footer ---------- */
 .site-footer {
-  background: #fff;
+  background: var(--white);
   border-top: 1px solid var(--line);
   padding-top: 56px;
 }
@@ -807,7 +837,7 @@ code {
     top: 64px;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--white);
     border-bottom: 1px solid var(--line);
     flex-direction: column;
     align-items: stretch;
@@ -867,7 +897,7 @@ code {
   width: min(440px, 100%);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
-  background: #fff;
+  background: var(--white);
   border-radius: 18px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
   padding: 32px 28px 24px;
@@ -950,7 +980,7 @@ code {
   border: 1.5px solid var(--line, #e3e8e2);
   border-radius: 12px;
   overflow: hidden;
-  background: #fafdf8;
+  background: var(--bg-alt);
   transition: border-color .15s ease, box-shadow .15s ease;
 }
 .phone-input:focus-within {
@@ -1055,7 +1085,7 @@ code {
   width: 100%;
   border: 1.5px solid var(--line, #e3e8e2);
   border-radius: 12px;
-  background: #fafdf8;
+  background: var(--bg-alt);
   font-size: 1.5rem;
   font-weight: 600;
   text-align: center;
@@ -1126,4 +1156,45 @@ body.modal-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .modal, .modal-card, .step-pane.is-active, .success-check { animation: none; }
   .btn-spinner { animation: none; }
+  body, .card, .cat-tile, .btn, .modal-card, .modal-overlay, input, .phone-input {
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   THEME TOGGLE
+   ========================================================= */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-700);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .15s ease;
+}
+.theme-toggle:hover {
+  background: var(--bg-alt);
+  color: var(--green-700);
+  border-color: var(--green-600);
+}
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
+}
+.theme-toggle:active { transform: scale(0.94); }
+
+/* Show sun in light mode, moon in dark */
+.theme-icon-moon { display: none; }
+:root[data-theme="dark"] .theme-icon-sun { display: none; }
+:root[data-theme="dark"] .theme-icon-moon { display: inline-block; }
+
+/* Auto-hide the theme-color meta flash on iOS */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) .auto-hint { color: var(--ink-500); }
 }

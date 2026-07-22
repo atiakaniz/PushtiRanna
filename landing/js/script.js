@@ -2,9 +2,46 @@
    - mobile menu toggle
    - smooth-scroll for anchor links
    - reveal-on-scroll via IntersectionObserver
+   - light/dark theme toggle (with localStorage + system-pref fallback)
 */
 (function () {
   'use strict';
+
+  // -------- Theme (light / dark) --------
+  const THEME_KEY = 'pushtiranna_theme';
+  const themeBtn = document.getElementById('themeToggle');
+
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark'
+      ? 'dark' : 'light';
+  }
+
+  function applyTheme(next, persist) {
+    if (next === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    if (persist) {
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* private mode */ }
+    }
+    if (themeBtn) {
+      themeBtn.setAttribute('aria-label',
+        next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      themeBtn.setAttribute('title',
+        next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+  }
+
+  if (themeBtn) {
+    // Initialize button state to match the theme already applied in <head>
+    applyTheme(currentTheme(), false);
+
+    themeBtn.addEventListener('click', function () {
+      const next = currentTheme() === 'dark' ? 'light' : 'dark';
+      applyTheme(next, true);
+    });
+  }
 
   // -------- Mobile nav toggle --------
   const toggle = document.getElementById('navToggle');
