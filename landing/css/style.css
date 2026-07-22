@@ -37,6 +37,11 @@
   --cta-bg-2:      #093d22;
   --cta-text:      #ffffff;
   --cta-text-muted: rgba(255, 255, 255, 0.85);
+
+  /* Primary button — forest green in light, deep teal in dark */
+  --btn-primary-bg:       #0f6b3a;
+  --btn-primary-bg-hover: #093d22;
+  --btn-primary-text:     #ffffff;
 }
 
 /* ---------- Dark theme overrides ----------
@@ -66,6 +71,12 @@
   --cta-bg-2:      #04140c;
   --cta-text:      #ffffff;
   --cta-text-muted: rgba(255, 255, 255, 0.85);
+
+  /* Primary button in dark mode: deep emerald so it doesn't blow out next
+     to the now-dark CTA panel; white text stays readable */
+  --btn-primary-bg:       #0e3a25;
+  --btn-primary-bg-hover: #155134;
+  --btn-primary-text:     #ffffff;
 }
 
 /* Smooth theme transitions */
@@ -140,11 +151,11 @@ code {
 }
 .btn:hover { text-decoration: none; transform: translateY(-1px); }
 .btn-primary {
-  background: var(--green-700);
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   box-shadow: var(--shadow-sm);
 }
-.btn-primary:hover { background: var(--green-900); }
+.btn-primary:hover { background: var(--btn-primary-bg-hover); }
 .btn-secondary {
   background: var(--white);
   color: var(--green-900);
