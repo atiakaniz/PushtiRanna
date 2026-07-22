@@ -30,6 +30,13 @@
 
   --font-en: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --font-bn: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
+
+  /* CTA section — dedicated tokens so dark theme can keep dark fills
+     and high-contrast white text regardless of accent palette flips. */
+  --cta-bg-1:      #0f6b3a;
+  --cta-bg-2:      #093d22;
+  --cta-text:      #ffffff;
+  --cta-text-muted: rgba(255, 255, 255, 0.85);
 }
 
 /* ---------- Dark theme overrides ----------
@@ -53,6 +60,12 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow:    0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.6);
+
+  /* CTA in dark mode: deep teal-to-near-black gradient, white text stays readable */
+  --cta-bg-1:      #0a2a1c;
+  --cta-bg-2:      #04140c;
+  --cta-text:      #ffffff;
+  --cta-text-muted: rgba(255, 255, 255, 0.85);
 }
 
 /* Smooth theme transitions */
@@ -153,8 +166,9 @@ code {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255,255,255,0.92);
+  background: color-mix(in srgb, var(--white) 92%, transparent);
   backdrop-filter: saturate(160%) blur(8px);
+  -webkit-backdrop-filter: saturate(160%) blur(8px);
   border-bottom: 1px solid var(--line);
 }
 .nav {
@@ -207,7 +221,7 @@ code {
 .hero {
   background:
     radial-gradient(1200px 600px at 80% -10%, var(--green-100) 0%, transparent 60%),
-    linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+    linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
   padding: 64px 0 72px;
 }
 .hero-grid {
@@ -734,21 +748,21 @@ code {
 /* ---------- Final CTA ---------- */
 .cta {
   background:
-    radial-gradient(800px 400px at 20% 100%, var(--green-700) 0%, var(--green-900) 70%);
-  color: #fff;
+    radial-gradient(800px 400px at 20% 100%, var(--cta-bg-1) 0%, var(--cta-bg-2) 70%);
+  color: var(--cta-text);
   padding: 80px 0;
 }
-.cta-inner {
-  text-align: center;
-  position: relative;
-}
-.cta h2 { color: #fff; font-size: clamp(1.8rem, 3.5vw, 2.4rem); }
-.cta p { color: rgba(255,255,255,0.85); max-width: 560px; margin: 0 auto 24px; }
+.cta h2 { color: var(--cta-text); font-size: clamp(1.8rem, 3.5vw, 2.4rem); }
+.cta p  { color: var(--cta-text-muted); max-width: 560px; margin: 0 auto 24px; }
 .cta .btn-primary {
   background: var(--white);
   color: var(--green-900);
 }
 .cta .btn-primary:hover { background: var(--gold-100); }
+.cta-inner {
+  text-align: center;
+  position: relative;
+}
 .cta-mark {
   width: 72px;
   height: 72px;
