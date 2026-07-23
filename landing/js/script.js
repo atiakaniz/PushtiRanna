@@ -48,19 +48,48 @@
   const nav    = document.getElementById('primaryNav');
 
   if (toggle && nav) {
-    toggle.addEventListener('click', function () {
-      const open = nav.classList.toggle('is-open');
+    const setOpen = function (open) {
+      nav.classList.toggle('is-open', open);
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      // Lock body scroll while the sheet is open on phones, so the
+      // page underneath doesn't bleed through and links above the
+      // fold stay unreachable. Modal styles already do this for
+      // #subscribeModal / #unsubscribeModal via body.modal-open.
+      document.body.classList.toggle('nav-open', open);
+    };
+
+    toggle.addEventListener('click', function () {
+      setOpen(!nav.classList.contains('is-open'));
     });
 
     // Close on link click (mobile)
     nav.querySelectorAll('a').forEach(function (a) {
       a.addEventListener('click', function () {
-        if (nav.classList.contains('is-open')) {
-          nav.classList.remove('is-open');
-          toggle.setAttribute('aria-expanded', 'false');
-        }
+        if (nav.classList.contains('is-open')) setOpen(false);
       });
+    });
+
+    // Tap outside to close — covers the empty area below the sheet.
+    document.addEventListener('click', function (e) {
+      if (!nav.classList.contains('is-open')) return;
+      if (nav.contains(e.target) || toggle.contains(e.target)) return;
+      setOpen(false);
+    });
+
+    // Escape closes — keyboard/AT users on desktop and external
+    // keyboards paired with phones.
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && nav.classList.contains('is-open')) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    // Reset on resize back to desktop so we don't keep body locked.
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 640 && nav.classList.contains('is-open')) {
+        setOpen(false);
+      }
     });
   }
 

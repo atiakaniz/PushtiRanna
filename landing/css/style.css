@@ -31,6 +31,16 @@
   --font-en: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   --font-bn: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
 
+  /* Mobile tap-target floor — Apple HIG / Material both call for ≥44px.
+     Used by nav toggle, theme toggle, modal close, chips. */
+  --tap-min: 44px;
+
+  /* Safe-area insets for notched phones (iOS, Android). Falls back to 0. */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+
   /* CTA section — dedicated tokens so dark theme can keep dark fills
      and high-contrast white text regardless of accent palette flips. */
   --cta-bg-1:      #0f6b3a;
@@ -104,7 +114,12 @@ body, .card, .cat-tile, .btn, .modal-card, .modal-overlay, input, .phone-input {
 
 /* ---------- Reset ---------- */
 *, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  /* Anchor jumps land cleanly below the sticky header. */
+  scroll-padding-top: 80px;
+}
 body {
   margin: 0;
   font-family: var(--font-en);
@@ -113,12 +128,26 @@ body {
   line-height: 1.6;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
+  /* Prevents accidental horizontal scroll on tiny phones when phone
+     mockups or oversized images overflow their containers. */
+  overflow-x: hidden;
 }
 img { max-width: 100%; display: block; }
 a { color: var(--green-700); text-decoration: none; }
 a:hover { text-decoration: underline; }
 button { font: inherit; cursor: pointer; }
 ul { padding: 0; margin: 0; list-style: none; }
+
+/* iOS Safari zooms the viewport when an input's font-size drops below
+   16px. Lock it to 16px for every form control. */
+input, select, textarea { font-size: 16px; }
+
+/* Honor reduced-data + reduced-motion in one place; small but worth
+   hiding non-essential hover transforms on touch devices so taps
+   don't trigger visual jank. */
+@media (hover: none) {
+  .card:hover, .cat-tile:hover, .btn:hover { transform: none; }
+}
 
 h1, h2, h3, h4 {
   color: var(--green-900);
@@ -148,6 +177,10 @@ code {
   max-width: var(--container);
   margin: 0 auto;
   padding: 0 20px;
+  /* Don't let the side gutters overflow into the notch zone on
+     rotated phones; the safe-area values are 0 on non-notched devices. */
+  padding-left:  max(20px, calc(var(--safe-left)  + 12px));
+  padding-right: max(20px, calc(var(--safe-right) + 12px));
 }
 
 /* ---------- Buttons ---------- */
@@ -201,7 +234,9 @@ code {
 /* ---------- Header ---------- */
 .site-header {
   position: sticky;
-  top: 0;
+  /* Leave the notch / camera cutout unobscured on iOS, fall back to 0
+     on other devices via env(). */
+  top: var(--safe-top);
   z-index: 50;
   background: color-mix(in srgb, var(--white) 92%, transparent);
   backdrop-filter: saturate(160%) blur(8px);
@@ -212,7 +247,9 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  /* Slightly shorter on mobile so the phone screen gets more room. */
+  height: 60px;
+  gap: 8px;
 }
 .brand {
   display: flex;
@@ -220,6 +257,11 @@ code {
   gap: 10px;
   font-weight: 700;
   color: var(--green-900);
+  /* Make the brand a real tap target on mobile. */
+  padding: 8px 6px;
+  margin-left: -6px;
+  border-radius: 10px;
+  min-height: var(--tap-min);
 }
 .brand:hover { text-decoration: none; }
 .brand-mark { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; }
@@ -241,10 +283,18 @@ code {
   display: none;
   background: none;
   border: 0;
-  padding: 8px;
+  /* 44×44 hit area for the hamburger so thumbs don't miss it. */
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
+  padding: 10px;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 5px;
+  border-radius: 10px;
+  color: var(--green-900);
 }
+.nav-toggle:active { background: rgba(0, 0, 0, 0.05); }
 .nav-toggle span {
   display: block;
   width: 24px;
@@ -313,6 +363,13 @@ code {
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
+}
+/* On narrow phones the two CTAs stack to full-width buttons so the
+   user has a generous tap target and they line up with the rest of
+   the hero content. */
+@media (max-width: 480px) {
+  .hero-ctas { flex-direction: column; align-items: stretch; }
+  .hero-ctas .btn { width: 100%; padding: 14px 22px; min-height: var(--tap-min); }
 }
 .hero-meta {
   font-size: 0.9rem;
@@ -807,6 +864,17 @@ code {
   margin: 36px auto 0;
   box-shadow: var(--shadow-lg);
 }
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 auto 16px;
+}
+@media (max-width: 480px) {
+  .cta-row { flex-direction: column; align-items: stretch; max-width: 360px; }
+  .cta-row .btn { width: 100%; min-height: var(--tap-min); }
+}
 
 /* ---------- Footer ---------- */
 .site-footer {
@@ -874,36 +942,76 @@ code {
 @media (max-width: 960px) {
   .hero { padding: 48px 0 56px; }
   .hero-grid { grid-template-columns: 1fr; gap: 36px; }
-  .hero-art { order: -1; max-width: 220px; margin: 0 auto; }
+  .hero-art { order: -1; max-width: 240px; margin: 0 auto; }
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
   .steps { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
+  /* Tighter phones so the trio doesn't dominate the preview section. */
+  .phones-grid .phone-frame.phone-sm { max-width: 200px; }
+  /* Hide the second phone in the trio when the viewport can't give
+     all three enough vertical room. */
+  .phones-grid { gap: 20px; }
 }
 
 @media (max-width: 640px) {
   .nav-links {
     display: none;
-    position: absolute;
-    top: 64px;
+    position: fixed;
+    /* Sit right under the 60px header; safe-area keeps it below the
+       camera cutout on iOS Safari. */
+    top: calc(60px + var(--safe-top));
     left: 0;
     right: 0;
     background: var(--white);
     border-bottom: 1px solid var(--line);
     flex-direction: column;
     align-items: stretch;
-    padding: 14px 20px;
-    gap: 12px;
+    padding: 16px 20px max(20px, var(--safe-bottom));
+    padding-left:  max(20px, calc(var(--safe-left)  + 12px));
+    padding-right: max(20px, calc(var(--safe-right) + 12px));
+    gap: 10px;
     box-shadow: var(--shadow);
+    /* Fill the rest of the viewport with the same color so the menu
+       doesn't expose the page beneath on tall phones. */
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    animation: nav-drop .18s ease;
+  }
+  @keyframes nav-drop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .nav-links.is-open { display: flex; }
-  .nav-links a { padding: 10px 4px; }
+  .nav-links a {
+    padding: 14px 8px;
+    min-height: var(--tap-min);
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+  }
+  .nav-links a:active { background: rgba(0, 0, 0, 0.05); }
   .nav-toggle { display: flex; }
+
+  /* The Subscribe button needs to read as a primary CTA even when the
+     rest of the menu is "list-like". */
+  .nav-links .subscribe-btn {
+    margin-top: 6px;
+    justify-content: center;
+    padding: 14px 22px;
+    min-height: var(--tap-min);
+  }
 
   /* User-menu trigger stays inline so the caret still toggles; the
      panel becomes a static, full-width block underneath it. */
   .user-menu { width: 100%; }
-  .user-menu-trigger { width: 100%; justify-content: flex-start; }
+  .user-menu-trigger {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: var(--tap-min);
+    padding: 12px 14px;
+  }
   .user-menu-panel {
     position: static;
     width: 100%;
@@ -916,13 +1024,46 @@ code {
     display: none;
   }
   .user-menu-panel.is-open { display: flex; }
+  .user-menu-item { padding: 14px 12px; min-height: var(--tap-min); }
+
+  /* Cards get a softer, tap-friendly look on mobile */
+  .card { padding: 20px; border-radius: 16px; }
+  .cat-tile .cat-meta { padding: 16px 18px 20px; }
 
   .grid-3, .grid-4 { grid-template-columns: 1fr; }
-  .phones-grid { grid-template-columns: 1fr; gap: 28px; }
+  /* On small phones the trio of phones becomes a horizontal scroll
+     gallery so the user can swipe through them without losing the
+     preview metaphor. */
+  .phones-grid {
+    grid-template-columns: none;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 18px;
+    margin: 0 -20px;
+    padding: 4px 20px 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .phones-grid > * {
+    flex: 0 0 70%;
+    max-width: 240px;
+    scroll-snap-align: center;
+  }
   .footer-grid { grid-template-columns: 1fr; }
-  .footer-bottom-row { flex-direction: column; }
-  h1 { font-size: 2rem; }
+  .footer-bottom-row { flex-direction: column; text-align: center; }
+  h1 { font-size: clamp(1.85rem, 7vw, 2.2rem); }
+  .hero h1 .bn { font-size: 0.95em; }
+  .hero h1 .en { font-size: 0.72em; }
+  .lede { font-size: 1rem; }
   .section { padding: 56px 0; }
+  .section-head { margin-bottom: 36px; }
+  .price-line { padding: 14px 16px; }
+  .pricing-card { padding: 28px 22px; }
+  .price .amount { font-size: 2.6rem; }
+  /* Reduce overscroll bounce on iOS so the page doesn't show a
+     blank bar above the sticky header. */
+  body { overscroll-behavior-y: none; }
 }
 
 /* ---------- Reduced motion ---------- */
@@ -1442,11 +1583,42 @@ code {
 /* Lock body scroll when modal open */
 body.modal-open { overflow: hidden; }
 
+/* Same lock for the mobile nav sheet — only meaningful on small
+   viewports because the desktop nav doesn't use `.is-open`. */
+body.nav-open { overflow: hidden; }
+
 @media (max-width: 480px) {
-  .modal-card { padding: 24px 20px 18px; border-radius: 16px; }
+  /* Bottom-sheet on phones: full-bleed, rounded top corners only,
+     pinned to the bottom edge so the user's thumb can reach the
+     primary CTA without stretching. */
+  .modal { padding: 0; align-items: flex-end; }
+  .modal-card {
+    padding: 28px 22px max(22px, var(--safe-bottom));
+    padding-left:  max(22px, calc(var(--safe-left)  + 14px));
+    padding-right: max(22px, calc(var(--safe-right) + 14px));
+    border-radius: 22px 22px 0 0;
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    animation: sheet-up .28s cubic-bezier(.2,.7,.3,1.1);
+  }
+  @keyframes sheet-up {
+    from { transform: translateY(100%); }
+    to   { transform: translateY(0); }
+  }
+  .modal-close {
+    /* 44×44 close button sits flush with the top-right of the sheet. */
+    width: var(--tap-min);
+    height: var(--tap-min);
+    top: 8px;
+    right: 8px;
+  }
   .modal-head h2 { font-size: 1.25rem; }
-  .otp-cell { font-size: 1.25rem; }
+  /* OTP cells: slightly larger for big-finger input but not so big
+     they push the grid to wrap. */
+  .otp-cell { font-size: 1.35rem; }
   .otp-grid { gap: 6px; }
+  /* Full-bleed buttons inside the sheet so thumbs always land cleanly. */
+  .modal-card .btn-block { min-height: var(--tap-min); padding: 14px 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1464,8 +1636,9 @@ body.modal-open { overflow: hidden; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  /* Mobile-friendly hit area; the visual circle stays at 36px. */
+  width: var(--tap-min);
+  height: var(--tap-min);
   border: 1px solid var(--line);
   border-radius: 50%;
   background: transparent;
