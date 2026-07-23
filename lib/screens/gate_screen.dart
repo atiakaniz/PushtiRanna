@@ -24,25 +24,22 @@ class _GateScreenState extends State<GateScreen> {
 
   Worker? _revokedWorker;
 
-  /// Set after `_route()` has been called once. Used to decide whether a
-  /// `subscriptionRevokedAt` bump came from our own launch check (no
-  /// snackbar — the user just opened the app cold) or from a resume-time
-  /// check that fired while the user was already using the app (show the
-  /// "subscription cancelled" snackbar).
-  bool _initialRoutingDone = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _route());
 
     // Whenever the controller declares the subscription revoked while we
-    // are mounted (either because we just re-checked on launch, or because
-    // a resume-time check from another screen fired), make sure we are
-    // showing the gate and show a snackbar explaining what happened.
-    _revokedWorker = ever<int>(auth.subscriptionRevokedAt, (_) {
+    // are mounted (because a resume-time check from another screen fired),
+    // make sure we are showing the gate. The "subscription cancelled"
+    // snackbar is one-shot — the controller tracks [revokeNotifyCount] and
+    // we only surface the snackbar when that counter actually advances,
+    // so background polling (which can bump subscriptionRevokedAt many
+    // times) does not spam the user with the same snackbar over and over.
+    _revokedWorker = ever<int>(auth.subscriptionRevokedAt, (value) {
       if (!mounted) return;
-      _route(showCancelledSnack: true);
+      final isFresh = auth.consumeRevokeNotification();
+      _route(showCancelledSnack: isFresh);
     });
   }
 
@@ -57,7 +54,6 @@ class _GateScreenState extends State<GateScreen> {
 
     if (savedPhone == null || savedPhone.isEmpty) {
       Get.offAllNamed(AppRoutes.PHONE);
-      _initialRoutingDone = true;
       return;
     }
 
@@ -68,20 +64,20 @@ class _GateScreenState extends State<GateScreen> {
     // landing page and then opens the app, both end up on the right
     // screen based on what bdapps says right now.
     final ok = await auth.checkSubscription();
-    _initialRoutingDone = true;
     if (!mounted) return;
     if (ok) {
       Get.offAllNamed(AppRoutes.HOME);
-    } else {
-      // Server says not subscribed. Send the user back to PHONE so they
-      // re-enter their number and re-subscribe from scratch — same flow
-      // as a brand-new user. PhoneScreen's submit handler will call
-      // checkSubscription() again and route HOME/SUBSCRIPTION based on
-      // whatever the server says at that moment.
-      Get.offAllNamed(AppRoutes.PHONE);
+      return;
     }
 
-    if (showCancelledSnack && _initialRoutingDone) {
+    // Server says not subscribed. Send the user back to PHONE so they
+    // re-enter their number and re-subscribe from scratch — same flow
+    // as a brand-new user. PhoneScreen's submit handler will call
+    // checkSubscription() again and route HOME/SUBSCRIPTION based on
+    // whatever the server says at that moment.
+    Get.offAllNamed(AppRoutes.PHONE);
+
+    if (showCancelledSnack) {
       // Defer until after the PHONE screen has built, otherwise we
       // surface the snackbar against the (about-to-be-disposed) Gate.
       WidgetsBinding.instance.addPostFrameCallback((_) {

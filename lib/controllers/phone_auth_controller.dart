@@ -27,12 +27,38 @@ class PhoneAuthController extends GetxController {
   /// observe this and bounce the user to `AppRoutes.GATE` when it changes.
   final RxInt subscriptionRevokedAt = 0.obs;
 
+  /// Bumped every time we transition from "subscribed" → "not subscribed".
+  /// Unlike [subscriptionRevokedAt] (which can be bumped repeatedly by
+  /// background polls that confirm a revoke we already know about), this
+  /// only advances on a real edge. UI surfaces (e.g. GateScreen's
+  /// "subscription cancelled" snackbar) should call
+  /// [consumeRevokeNotification] to read-and-clear it so the same revoke
+  /// never produces more than one snackbar.
+  final RxInt revokeNotifyCount = 0.obs;
+
+  /// Returns `true` exactly once per fresh `subscribed → not-subscribed`
+  /// edge. Background polls that confirm an already-known revoke return
+  /// `false`, so the UI does not re-show the same snackbar over and over.
+  bool consumeRevokeNotification() {
+    final target = revokeNotifyCount.value;
+    final current = _lastConsumedRevoke;
+    if (target == current) return false;
+    _lastConsumedRevoke = target;
+    return true;
+  }
+
+  int _lastConsumedRevoke = 0;
+
   Box<String> get _box => Hive.box<String>(_boxName);
 
   bool get isSubscribed => _box.get(_subscribedKey) == '1';
 
   Future<void> markSubscribed() async {
     await _box.put(_subscribedKey, '1');
+    // Reset the one-shot revoke notification so a *future* revoke can
+    // notify the user, but a stale revoke from before this resubscribe
+    // never does.
+    _lastConsumedRevoke = revokeNotifyCount.value;
   }
 
   Future<void> markUnsubscribed() async {
@@ -146,11 +172,16 @@ class PhoneAuthController extends GetxController {
   /// Shared cleanup used by [checkSubscription] and any future
   /// server-driven revoke path. Centralised so the side-effects stay in
   /// one place (mark flag, clear phone, bump the revoke-counter).
+  ///
+  /// `wasSubscribed` is the local belief *before* we clear the flag — it
+  /// tells us whether this is a real `subscribed → not-subscribed` edge
+  /// (notify the UI) or just background noise confirming an already-known
+  /// revoke (don't notify again).
   Future<void> _handleRevoked({
     bool clearPhone = false,
     String detail = '',
   }) async {
-    final wasSubscribed = isSubscribed || currentPhone.value.isNotEmpty;
+    final wasSubscribed = isSubscribed;
     await markUnsubscribed();
     if (clearPhone) {
       await clearSavedPhone();
@@ -158,6 +189,7 @@ class PhoneAuthController extends GetxController {
     if (wasSubscribed) {
       debugPrint('[PhoneAuth] subscription revoked: "$detail"');
       subscriptionRevokedAt.value += 1;
+      revokeNotifyCount.value += 1;
     }
   }
 
@@ -316,9 +348,13 @@ class PhoneAuthController extends GetxController {
 
       if (ok) {
         // Server says the subscription is cancelled. Clear local state so
-        // GateScreen routes the user back to subscription flow.
+        // GateScreen routes the user back to subscription flow, and bump
+        // the one-shot revoke notification so the first time the gate
+        // re-routes the user to PHONE after this unsubscribe we surface
+        // the "subscription cancelled" snackbar — but only this once.
         await markUnsubscribed();
         await clearSavedPhone();
+        revokeNotifyCount.value += 1;
         return true;
       }
 
