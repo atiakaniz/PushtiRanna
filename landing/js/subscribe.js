@@ -56,6 +56,14 @@
     els.panes       = $$('.step-pane');
     els.errorNodes  = $$('[data-error]', els.modal);
 
+    // Unsubscribe modal — separate DOM tree, scoped lookups
+    els.unsubModal      = $('#unsubscribeModal');
+    els.unsubCloseBtns  = $$('[data-unsubscribe-close]');
+    els.unsubOpenBtns   = $$('[data-unsubscribe-open]');
+    els.unsubConfirmBtn = $('[data-action="confirm-unsubscribe"]');
+    els.unsubError      = $('#unsubscribeModal [data-error]');
+    els.unsubDisplayPhone = $('[data-display-unsubscribe-phone]');
+
     // Phone step
     els.phoneForm   = $('#phoneForm');
     els.phoneInput  = $('#phoneInput');
@@ -78,6 +86,13 @@
 
     // Header / CTA Subscribe buttons (update label based on state)
     els.subscribeBtns = $$('.subscribe-btn');
+
+    // User account menu (Download APK / Unsubscribe / Log out)
+    els.userMenu         = $('#userMenu');
+    els.userMenuTrigger  = $('#userMenuTrigger');
+    els.userMenuPanel    = $('#userMenuPanel');
+    els.userMenuNumber   = $('[data-display-user-phone]');
+    els.userLogoutBtn    = $('[data-user-logout]');
   }
 
   function bindTriggers() {
@@ -88,6 +103,40 @@
     // Close (backdrop + × button)
     els.closeBtns.forEach(btn =>
       btn.addEventListener('click', closeModal));
+
+    // Unsubscribe modal triggers
+    els.unsubOpenBtns.forEach(btn =>
+      btn.addEventListener('click', (e) => {
+        closeUserMenu();
+        openUnsubscribeModal(e);
+      }));
+    els.unsubCloseBtns.forEach(btn =>
+      btn.addEventListener('click', closeUnsubscribeModal));
+    if (els.unsubConfirmBtn) {
+      els.unsubConfirmBtn.addEventListener('click', handleConfirmUnsubscribe);
+    }
+
+    // User account menu — open/close, outside-click, Esc, log out
+    if (els.userMenuTrigger) {
+      els.userMenuTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleUserMenu();
+      });
+    }
+    if (els.userMenuPanel) {
+      // Prevent clicks inside the panel from bubbling to the document
+      // listener (otherwise the panel would close immediately).
+      els.userMenuPanel.addEventListener('click', (e) => e.stopPropagation());
+    }
+    if (els.userLogoutBtn) {
+      els.userLogoutBtn.addEventListener('click', handleLogout);
+    }
+    document.addEventListener('click', (e) => {
+      if (!els.userMenu || els.userMenu.hidden) return;
+      if (els.userMenu.contains(e.target)) return;
+      closeUserMenu();
+    });
+    window.addEventListener('resize', closeUserMenu);
 
     // Phone form submit
     els.phoneForm.addEventListener('submit', (e) => {
@@ -124,7 +173,15 @@
 
     // Escape to close
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !els.modal.hidden) closeModal();
+      if (e.key !== 'Escape') return;
+      if (els.unsubModal && !els.unsubModal.hidden) {
+        closeUnsubscribeModal();
+      } else if (!els.modal.hidden) {
+        closeModal();
+      } else if (els.userMenu && !els.userMenu.hidden &&
+                 els.userMenuPanel && els.userMenuPanel.classList.contains('is-open')) {
+        closeUserMenu();
+      }
     });
   }
 
@@ -161,6 +218,164 @@
     els.modal.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('modal-open');
     clearErrors();
+  }
+
+  // ---------- Unsubscribe modal ----------
+  // Mirrors openModal/closeModal but for a separate DOM tree. We keep the
+  // modal-open body class only when one is visible so background scrolling
+  // behaves identically to the subscribe flow.
+  function openUnsubscribeModal() {
+    // Normalize on read so we display the same local-form number we'll POST.
+    const phone = normalizePhone(localStorage.getItem(STORAGE_PHONE) || '') || '';
+    if (els.unsubDisplayPhone) {
+      els.unsubDisplayPhone.textContent = phone
+        ? DISPLAY_FMT(phone)
+        : '—';
+    }
+    if (els.unsubError) {
+      els.unsubError.textContent = '';
+      els.unsubError.hidden = true;
+    }
+    if (els.unsubConfirmBtn) {
+      els.unsubConfirmBtn.disabled = false;
+      const label = els.unsubConfirmBtn.querySelector('.btn-label');
+      const spinner = els.unsubConfirmBtn.querySelector('.btn-spinner');
+      if (label) label.textContent = 'Yes, cancel my subscription';
+      if (spinner) spinner.hidden = true;
+    }
+    els.unsubModal.hidden = false;
+    els.unsubModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    // Focus the "Keep" button so Enter / Space doesn't immediately fire the
+    // destructive primary — the user can arrow-up or click to confirm.
+    setTimeout(() => {
+      const keepBtn = els.unsubModal.querySelector('[data-unsubscribe-close].btn-secondary');
+      keepBtn && keepBtn.focus();
+    }, 50);
+  }
+
+  function closeUnsubscribeModal() {
+    els.unsubModal.hidden = true;
+    els.unsubModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+  }
+
+  /// Submit handler for the unsubscribe confirmation.
+  /// Mirrors handleSendOtp's UX: spinner on, button disabled, server POST,
+  /// then a success or inline error state.
+  async function handleConfirmUnsubscribe() {
+    // The PHP endpoint expects the local 11-digit `01XXXXXXXXX` form —
+    // not the 13-digit `8801XXXXXXXXX` country-code form. `normalizePhone`
+    // strips any leading `88`/`880` so the server's regex passes.
+    const stored = localStorage.getItem(STORAGE_PHONE);
+    const phone = normalizePhone(stored || '');
+    if (!phone) {
+      showError(els.unsubError, 'No active subscription found for this device.');
+      return;
+    }
+
+    const btn = els.unsubConfirmBtn;
+    const label = btn && btn.querySelector('.btn-label');
+    const spinner = btn && btn.querySelector('.btn-spinner');
+    if (btn) btn.disabled = true;
+    if (label) label.textContent = 'Cancelling…';
+    if (spinner) spinner.hidden = false;
+
+    try {
+      const res = await postForm(ENDPOINTS.unsubscribe, { user_mobile: phone });
+      const data = await res.json().catch(() => ({}));
+
+      // Normalize the response so we can match a few alternate shapes
+      // coming back from bdapps / our PHP wrapper.
+      const code    = (data.statusCode || data.code || '').toString().toUpperCase();
+      const status  = (data.subscriptionStatus || '').toString().toUpperCase();
+      const detail  = (data.statusDetail || data.detail || '').toString();
+      const successFlag = data.success === true || data.success === 'true';
+      const errorFlag   = data.success === false || data.success === 'false';
+      const errorText   = (data.error || data.message || '').toString();
+      const alreadyUnreg =
+        status === 'UNREGISTERED' ||
+        /already\s*un[_\s-]?registered/i.test(detail) ||
+        /format\s*of\s*the\s*address\s*is\s*invalid/i.test(detail);
+
+      // ----- Success paths -----
+      //   - bdapps S1000 with UNREGISTERED status
+      //   - PHP wrapper reports success:true
+      //   - server says "already unregistered" (treat as success so the
+      //     user's local state stays consistent with the carrier)
+      const ok = res.ok && (
+        successFlag ||
+        code === 'S1000' ||
+        status === 'UNREGISTERED' ||
+        alreadyUnreg
+      );
+
+      if (ok) {
+        markUnsubscribed();
+        closeUnsubscribeModal();
+        showToast(
+          alreadyUnreg && !successFlag && code !== 'S1000'
+            ? 'No active subscription was found. You can resubscribe anytime.'
+            : 'Subscription cancelled. You can resubscribe anytime.'
+        );
+        return;
+      }
+
+      // ----- Error paths -----
+      const shown = (errorFlag && (errorText || detail))
+        ? `${errorText || 'Unsubscribe failed'}: ${detail || code || 'unknown error'}`
+        : (detail || code || errorText ||
+           'The server could not cancel your subscription. Please try again.');
+      showError(els.unsubError, shown);
+    } catch (err) {
+      console.error('[unsubscribe]', err);
+      showError(els.unsubError,
+        'Could not reach the server. Check your connection and try again.');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (label) label.textContent = 'Yes, cancel my subscription';
+      if (spinner) spinner.hidden = true;
+    }
+  }
+
+  /// Minimal one-shot toast — avoids pulling in a notification library
+  /// for a single line of feedback. Auto-dismisses after 3.5s.
+  function showToast(message) {
+    let toast = document.getElementById('appToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'appToast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      // Inline styles — keeps it self-contained without a CSS edit.
+      Object.assign(toast.style, {
+        position: 'fixed',
+        left: '50%',
+        bottom: '24px',
+        transform: 'translateX(-50%)',
+        background: '#1B5E20',
+        color: '#fff',
+        padding: '12px 18px',
+        borderRadius: '10px',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+        fontSize: '0.92rem',
+        zIndex: '9999',
+        opacity: '0',
+        transition: 'opacity .25s ease',
+        pointerEvents: 'none',
+        maxWidth: '90vw',
+        textAlign: 'center',
+      });
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    // Force reflow so the transition fires from opacity 0 → 1.
+    void toast.offsetWidth;
+    toast.style.opacity = '1';
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+    }, 3500);
   }
 
   // ---------- Step transitions ----------
@@ -381,10 +596,23 @@
     hydrateHeaderButtons();
   }
 
+  /// Mirror of markSubscribed() for the cancellation path.
+  /// Clears both the subscription flag and the cached phone so the
+  /// header returns to the bare "Subscribe" CTA — and so a subsequent
+  /// page load (where `restoreState` reads the phone) doesn't show the
+  /// account menu again. Also clears the in-flight OTP reference.
+  function markUnsubscribed() {
+    localStorage.removeItem(STORAGE_SUB);
+    localStorage.removeItem(STORAGE_PHONE);
+    sessionStorage.removeItem('pushtiranna_ref');
+    sessionStorage.removeItem(STORAGE_PHONE);
+    hydrateHeaderButtons();
+  }
+
   function restoreState() {
     // On load, optionally check with server that phone is still subscribed.
-    const phone = localStorage.getItem(STORAGE_PHONE);
-    if (phone && PHONE_REGEX.test(phone)) {
+    const phone = normalizePhone(localStorage.getItem(STORAGE_PHONE) || '');
+    if (phone) {
       // Optimistically mark subscribed, then verify in background
       hydrateHeaderButtons();
       verifySubscriptionWithServer(phone).catch(() => {});
@@ -397,12 +625,33 @@
     try {
       const res = await postForm(ENDPOINTS.checkSubs, { user_mobile: phone });
       const data = await res.json().catch(() => ({}));
-      if (data && data.isSubscribed === false) {
-        // Server says no — clear local state
+
+      const code    = (data.statusCode || '').toString().toUpperCase();
+      const status  = (data.subscriptionStatus || '').toString().toUpperCase();
+      const detail  = (data.statusDetail || '').toString();
+
+      // Treat any "not currently subscribed" signal as a confirmation to
+      // clear local state — matches the exact PHP wrapper shape you see
+      // from Postman:
+      //   { isSubscribed: false, statusCode: 'E1951',
+      //     statusDetail: 'Format of the address is invalid Or User Already UnRegistered' }
+      const isUnreg =
+        data.isSubscribed === false ||
+        status === 'UNREGISTERED' ||
+        /already\s*un[_\s-]?registered/i.test(detail) ||
+        /format\s*of\s*the\s*address\s*is\s*invalid/i.test(detail) ||
+        code === 'E1951' || code === 'E1351';
+
+      if (isUnreg) {
+        // Server says no — clear local state so the header returns to
+        // the "Subscribe" CTA and the user-account menu hides.
         localStorage.removeItem(STORAGE_SUB);
         localStorage.removeItem(STORAGE_PHONE);
         hydrateHeaderButtons();
-      } else if (data && (data.isSubscribed === true || /subscribed|registered/i.test(
+        return;
+      }
+
+      if (data && (data.isSubscribed === true || /subscribed|registered/i.test(
         (data.subscriptionStatus || '') + ' ' + (data.statusDetail || '')))) {
         localStorage.setItem(STORAGE_SUB, '1');
         hydrateHeaderButtons();
@@ -425,9 +674,11 @@
   function hydrateHeaderButtons() {
     const subscribed = localStorage.getItem(STORAGE_SUB) === '1';
     const phone = localStorage.getItem(STORAGE_PHONE);
+    const validPhone = subscribed && phone && /^01[3-9][0-9]{8}$/.test(phone);
+
     els.subscribeBtns.forEach(btn => {
       btn.classList.toggle('is-subscribed', subscribed);
-      if (subscribed && phone && /^01[3-9][0-9]{8}$/.test(phone)) {
+      if (validPhone) {
         const last4 = phone.slice(-4);
         btn.textContent = `Subscribed ✓ (${last4})`;
         btn.setAttribute('title', `Subscribed: ${DISPLAY_FMT(phone)}`);
@@ -445,6 +696,69 @@
         }
       }
     });
+
+    // Reveal the user-account menu only when there's a verified local
+    // subscription. Hidden by default via the HTML `hidden` attribute, so
+    // first-paint never flashes it for non-subscribers.
+    if (els.userMenu) {
+      els.userMenu.hidden = !validPhone;
+      els.userMenu.setAttribute('aria-hidden', validPhone ? 'false' : 'true');
+    }
+    if (validPhone && els.userMenuNumber) {
+      const last4 = phone.slice(-4);
+      els.userMenuNumber.textContent = `018•••${last4}`;
+      if (els.userMenuTrigger) {
+        els.userMenuTrigger.setAttribute('title',
+          `Account: ${DISPLAY_FMT(phone)} — click to manage`);
+      }
+    } else if (!validPhone) {
+      // Make sure the dropdown itself is closed when the menu is hidden.
+      closeUserMenu();
+    }
+  }
+
+  // ---------- User account menu ----------
+  function toggleUserMenu() {
+    if (!els.userMenuPanel) return;
+    if (els.userMenuPanel.classList.contains('is-open')) {
+      closeUserMenu();
+    } else {
+      openUserMenu();
+    }
+  }
+
+  function openUserMenu() {
+    if (!els.userMenuPanel || !els.userMenuTrigger) return;
+    els.userMenuPanel.hidden = false;
+    // Force reflow so the transition fires.
+    void els.userMenuPanel.offsetWidth;
+    els.userMenuPanel.classList.add('is-open');
+    els.userMenuTrigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closeUserMenu() {
+    if (!els.userMenuPanel || !els.userMenuTrigger) return;
+    els.userMenuPanel.classList.remove('is-open');
+    els.userMenuTrigger.setAttribute('aria-expanded', 'false');
+    // Hide after the transition so screen readers don't see the panel
+    // as accessible while it's animating away.
+    setTimeout(() => {
+      if (els.userMenuPanel && !els.userMenuPanel.classList.contains('is-open')) {
+        els.userMenuPanel.hidden = true;
+      }
+    }, 180);
+  }
+
+  /// Log out keeps the user on the landing page but clears the local
+  /// subscription marker so the trigger hides and the CTA returns.
+  function handleLogout() {
+    closeUserMenu();
+    localStorage.removeItem(STORAGE_SUB);
+    localStorage.removeItem(STORAGE_PHONE);
+    sessionStorage.removeItem('pushtiranna_ref');
+    sessionStorage.removeItem(STORAGE_PHONE);
+    hydrateHeaderButtons();
+    showToast('Signed out. You can resubscribe anytime.');
   }
 
   // ---------- UI helpers ----------

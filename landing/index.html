@@ -52,6 +52,61 @@
         <button type="button"
                 class="btn btn-ghost btn-sm subscribe-btn"
                 data-subscribe-open>Subscribe</button>
+
+        <!-- User account menu — only visible after a successful subscription.
+             The trigger shows the last 4 digits of the phone; clicking it
+             opens a dropdown with Download APK, Unsubscribe, and Log out. -->
+        <div class="user-menu" id="userMenu" hidden aria-hidden="true">
+          <button type="button"
+                  class="user-menu-trigger"
+                  id="userMenuTrigger"
+                  aria-haspopup="menu"
+                  aria-expanded="false"
+                  aria-controls="userMenuPanel"
+                  title="Account menu">
+            <span class="user-menu-avatar" aria-hidden="true">👤</span>
+            <span class="user-menu-number" data-display-user-phone>—</span>
+            <svg class="user-menu-caret" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <div class="user-menu-panel"
+               id="userMenuPanel"
+               role="menu"
+               aria-labelledby="userMenuTrigger"
+               hidden>
+            <a class="user-menu-item"
+               role="menuitem"
+               href="https://pushtiranna.nestorabyatia.xyz/app_apk/pushti_ranna.apk">
+              <span class="user-menu-ico" aria-hidden="true">⬇</span>
+              <span class="user-menu-text">
+                <strong>Download APK</strong>
+                <small>Get the app on your phone</small>
+              </span>
+            </a>
+            <button type="button"
+                    class="user-menu-item"
+                    role="menuitem"
+                    data-unsubscribe-open>
+              <span class="user-menu-ico" aria-hidden="true">🚪</span>
+              <span class="user-menu-text">
+                <strong>Unsubscribe</strong>
+                <small>Cancel your subscription</small>
+              </span>
+            </button>
+            <button type="button"
+                    class="user-menu-item user-menu-item-danger"
+                    role="menuitem"
+                    data-user-logout>
+              <span class="user-menu-ico" aria-hidden="true">⎋</span>
+              <span class="user-menu-text">
+                <strong>Log out</strong>
+                <small>Sign out of this device</small>
+              </span>
+            </button>
+          </div>
+        </div>
+
         <button type="button"
                 class="theme-toggle"
                 id="themeToggle"
@@ -75,7 +130,7 @@
     <div class="container hero-grid">
       <div class="hero-copy">
         <h1>
-          <span class="bn">"সুস্থ থাকুন, পুষ্টিকর রান্নার সাথে"</span>
+          <span class="bn">সুস্থ থাকুন, পুষ্টিকর রান্নার সাথে</span>
           <span class="en">Healthier Bengali Recipes, Every Day</span>
         </h1>
         <p class="lede">
@@ -533,6 +588,52 @@
           </p>
         </div>
       </section>
+
+    </div>
+  </div>
+
+  <!-- ============== UNSUBSCRIBE MODAL ============== -->
+  <div class="modal modal-danger" id="unsubscribeModal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="unsubscribeTitle">
+    <div class="modal-overlay" data-unsubscribe-close></div>
+    <div class="modal-card" role="document">
+
+      <button type="button" class="modal-close" aria-label="Close" data-unsubscribe-close>×</button>
+
+      <header class="modal-head">
+        <span class="modal-eyebrow modal-eyebrow-danger">⚠ Cancel subscription</span>
+        <h2 id="unsubscribeTitle">Are you sure?</h2>
+        <p>This will cancel your PushtiRanna subscription. You can resubscribe anytime.</p>
+      </header>
+
+      <div class="modal-form">
+        <div class="unsubscribe-summary">
+          <div class="unsubscribe-row">
+            <span class="unsubscribe-label">Phone</span>
+            <span class="unsubscribe-value" data-display-unsubscribe-phone>—</span>
+          </div>
+          <div class="unsubscribe-row">
+            <span class="unsubscribe-label">Daily charge</span>
+            <span class="unsubscribe-value">2.78 BDT/day</span>
+          </div>
+          <p class="modal-error" data-error hidden></p>
+        </div>
+
+        <button type="button"
+                class="btn btn-danger btn-block"
+                data-action="confirm-unsubscribe">
+          <span class="btn-label">Yes, cancel my subscription</span>
+          <span class="btn-spinner" hidden></span>
+        </button>
+
+        <button type="button"
+                class="btn btn-secondary btn-block"
+                data-unsubscribe-close>Keep my subscription</button>
+
+        <p class="modal-foot muted small">
+          Prefer to manage from the app? Open
+          <strong>Settings → Unsubscribe</strong> inside PushtiRanna.
+        </p>
+      </div>
 
     </div>
   </div>

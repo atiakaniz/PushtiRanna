@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/recipe_controller.dart';
@@ -5,13 +7,49 @@ import '../controllers/phone_auth_controller.dart';
 import '../widgets/recipe_card.dart';
 import '../routes/app_routes.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   HomeScreen({super.key});
 
-  final RecipeController controller =
-  Get.find<RecipeController>();
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final RecipeController controller = Get.find<RecipeController>();
 
   final PhoneAuthController _phone = Get.find();
+
+  Worker? _revokedWorker;
+  Timer? _subscriptionPoll;
+
+  @override
+  void initState() {
+    super.initState();
+    // If a server-side check fires while the user is on the Home screen
+    // (e.g. resume after they unsubscribed from the landing page), send
+    // them back to the gate so they can resubscribe.
+    _revokedWorker = ever<int>(_phone.subscriptionRevokedAt, (_) {
+      if (!mounted) return;
+      Get.offAllNamed(AppRoutes.GATE);
+    });
+
+    // Belt-and-braces: even if the user keeps the app in the foreground
+    // for a long stretch (so the AppLifecycleState.resumed hook never
+    // fires), poll the server every 30s. If bdapps says the subscription
+    // is gone, _phone.subscriptionRevokedAt bumps and the worker above
+    // routes us back to the gate.
+    _subscriptionPoll = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _phone.checkSubscription(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _revokedWorker?.dispose();
+    _subscriptionPoll?.cancel();
+    super.dispose();
+  }
 
   Widget _buildChip(String category) {
     return Padding(

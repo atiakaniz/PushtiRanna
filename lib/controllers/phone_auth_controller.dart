@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../services/bdapps_service.dart';
@@ -18,6 +20,12 @@ class PhoneAuthController extends GetxController {
 
   /// Returned by `sendOtp` and required by `verifyOtp`.
   final RxnString referenceNo = RxnString();
+
+  /// Increments whenever the server reports the subscription was revoked
+  /// (either from a fresh `checkSubscription` call on launch/resume, or
+  /// from an in-app unsubscribe). Watchers (Home, Settings, etc.) should
+  /// observe this and bounce the user to `AppRoutes.GATE` when it changes.
+  final RxInt subscriptionRevokedAt = 0.obs;
 
   Box<String> get _box => Hive.box<String>(_boxName);
 
@@ -74,6 +82,21 @@ class PhoneAuthController extends GetxController {
       phone.startsWith('+') ? phone.substring(1) : phone;
 
   /// `true` if the user is subscribed on the server.
+  ///
+  /// The PHP `check_subscription.php` returns several shapes depending on
+  /// what bdapps reports. We accept any of the following as "active":
+  ///   * `isSubscribed === true`
+  ///   * `subscriptionStatus === "REGISTERED"` (or `"registered"`)
+  ///   * `statusCode === "S1000"` and no explicit `isSubscribed === false`
+  ///
+  /// Everything else (including E1951 transient getStatus errors,
+  /// `UNREGISTERED`, E1351 with "format of address is invalid") is treated
+  /// as "not subscribed" — bdapps will only return a positive answer when
+  /// it can actually confirm the user's subscription, so the safe default
+  /// is to lock the app out when the payload is ambiguous.
+  ///
+  /// On detecting a revoked subscription we also clear the cached phone
+  /// number and bump [subscriptionRevokedAt] so screens can react.
   Future<bool> checkSubscription() async {
     final phone = currentPhone.value;
     if (phone.isEmpty) return false;
@@ -82,14 +105,33 @@ class PhoneAuthController extends GetxController {
     try {
       final data = await BdappsService.checkSubscription(_forApi(phone));
       debugPrint('[PhoneAuth] checkSubscription response: $data');
+
       final v = data['isSubscribed'];
-      final active = v == true || v == 'true';
+      final explicitActive = v == true || v == 'true';
+      final explicitInactive = v == false || v == 'false';
+      final statusCode = data['statusCode']?.toString().toUpperCase();
+      final subStatus =
+          data['subscriptionStatus']?.toString().toUpperCase() ?? '';
+      final statusDetail =
+          (data['statusDetail'] ?? data['message'] ?? '').toString();
+
+      final active = explicitActive ||
+          (!explicitInactive &&
+              (statusCode == 'S1000' || subStatus == 'REGISTERED'));
+
       if (active) {
         await markSubscribed();
-      } else {
-        await markUnsubscribed();
+        return true;
       }
-      return active;
+
+      // Not subscribed / inactive / ambiguous. Clear the local
+      // `is_subscribed` flag so GateScreen routes the user back into the
+      // subscription flow, but keep the saved phone number on disk so the
+      // user does not have to re-type it — the OTP step will just go
+      // straight back to HOME if the subscription is already active on
+      // the server (e.g. they re-subscribed from the landing page).
+      await _handleRevoked(clearPhone: false, detail: statusDetail);
+      return false;
     } on BdappsException catch (e) {
       lastError.value = e.message;
       return false;
@@ -98,6 +140,24 @@ class PhoneAuthController extends GetxController {
       return false;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Shared cleanup used by [checkSubscription] and any future
+  /// server-driven revoke path. Centralised so the side-effects stay in
+  /// one place (mark flag, clear phone, bump the revoke-counter).
+  Future<void> _handleRevoked({
+    bool clearPhone = false,
+    String detail = '',
+  }) async {
+    final wasSubscribed = isSubscribed || currentPhone.value.isNotEmpty;
+    await markUnsubscribed();
+    if (clearPhone) {
+      await clearSavedPhone();
+    }
+    if (wasSubscribed) {
+      debugPrint('[PhoneAuth] subscription revoked: "$detail"');
+      subscriptionRevokedAt.value += 1;
     }
   }
 
@@ -226,13 +286,49 @@ class PhoneAuthController extends GetxController {
     }
   }
 
+  /// Cancels the bdapps subscription for the currently saved phone.
+  ///
+  /// The PHP layer (`unsubscribe.php`) returns:
+  ///   * `{ "success": true, "statusCode": "S1000",
+  ///       "subscriptionStatus": "UNREGISTERED", ... }`  — happy path
+  ///   * `{ "success": false, "statusCode": "E...", "statusDetail": "..." }`
+  ///     — bdapps rejected the request (e.g. E1325 already unregistered)
+  ///
+  /// Success is determined as: `data.success === true`,
+  /// OR `data.statusCode === 'S1000'`, OR `subscriptionStatus === 'UNREGISTERED'`.
   Future<bool> unsubscribe() async {
+    final phone = currentPhone.value;
+    if (phone.isEmpty) {
+      lastError.value = 'No phone number saved';
+      return false;
+    }
     isLoading.value = true;
     lastError.value = '';
     try {
-      final data = await BdappsService.unsubscribe(_forApi(currentPhone.value));
-      return data['statusCode']?.toString() == '200' ||
-          data['status']?.toString().toLowerCase() == 'ok';
+      final data = await BdappsService.unsubscribe(_forApi(phone));
+      debugPrint('[PhoneAuth] unsubscribe response: $data');
+
+      final ok = data['success'] == true ||
+          data['success'] == 'true' ||
+          data['statusCode']?.toString().toUpperCase() == 'S1000' ||
+          (data['subscriptionStatus']?.toString().toUpperCase() ==
+              'UNREGISTERED');
+
+      if (ok) {
+        // Server says the subscription is cancelled. Clear local state so
+        // GateScreen routes the user back to subscription flow.
+        await markUnsubscribed();
+        await clearSavedPhone();
+        return true;
+      }
+
+      final detail = (data['statusDetail'] ??
+              data['message'] ??
+              data['statusCode'] ??
+              'Unsubscribe failed')
+          .toString();
+      lastError.value = 'Unsubscribe failed: $detail';
+      return false;
     } on BdappsException catch (e) {
       lastError.value = e.message;
       return false;
@@ -248,5 +344,48 @@ class PhoneAuthController extends GetxController {
   void onInit() {
     super.onInit();
     currentPhone.value = _box.get(_phoneKey) ?? '';
+    // Register the app-lifecycle observer so a user who unsubscribes from
+    // the landing page (or any other bdapps surface) is forced back to the
+    // gate the next time the app comes to the foreground.
+    _lifecycleObserver = _AppLifecycleHook(this);
+    WidgetsBinding.instance.addObserver(_lifecycleObserver!);
+  }
+
+  @override
+  void onClose() {
+    final obs = _lifecycleObserver;
+    _lifecycleObserver = null;
+    if (obs != null) {
+      WidgetsBinding.instance.removeObserver(obs);
+    }
+    super.onClose();
+  }
+
+  _AppLifecycleHook? _lifecycleObserver;
+}
+
+/// Bridges [WidgetsBinding] lifecycle callbacks into [PhoneAuthController].
+///
+/// On every `AppLifecycleState.resumed` we re-validate the cached
+/// subscription against `check_subscription.php`. If bdapps reports the
+/// user is no longer subscribed, the controller clears local state and
+/// the screens (Home, Settings, Gate) observe the bump and route to the
+/// gate. Network errors are swallowed: a flaky connection must never
+/// kick the user out of the app on its own — the source of truth has to
+/// be an explicit "not subscribed" answer from bdapps.
+class _AppLifecycleHook extends WidgetsBindingObserver {
+  _AppLifecycleHook(this._controller);
+
+  final PhoneAuthController _controller;
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    if (_controller.currentPhone.value.isEmpty) return;
+    if (!_controller.isSubscribed) return;
+    // Fire-and-forget. checkSubscription handles all errors internally and
+    // will only mutate state / bump subscriptionRevokedAt when bdapps
+    // confirms the user is no longer subscribed.
+    unawaited(_controller.checkSubscription());
   }
 }
