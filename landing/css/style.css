@@ -835,19 +835,23 @@ code {
 }
 
 /* ============== HERO HIGHLIGHTS ============== */
-/* Three short trust-signal items rendered right under the hero CTAs.
-   No pill backgrounds — just a flat coloured icon and label, so they
-   read as an inline promise row rather than a card list. Two columns
-   on desktop, wrapping to two rows; collapses to a single column on
-   very narrow screens. */
+/* Three short trust-signal items wrapped in a green-bordered card,
+   sitting right under the hero CTAs. First row holds the first two
+   items side-by-side, the third item wraps onto its own line — that
+   matches the reference design and keeps "Cancel anytime" as a
+   standalone promise. */
 .hero-highlights {
   list-style: none;
   margin: 22px 0 0;
-  padding: 0;
+  padding: 16px 18px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 28px;
   max-width: 460px;
+  border: 1.5px solid rgba(15, 107, 58, 0.35);
+  border-radius: 14px;
+  background: rgba(31, 230, 132, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 107, 58, 0.04);
 }
 .hero-highlights li {
   display: flex;
