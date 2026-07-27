@@ -834,50 +834,44 @@ code {
   font-weight: 700;
 }
 
-/* ============== FEATURE PILLS (pricing card) ============== */
-/* Three rounded white pills with a green circular emoji icon on the
-   left. 2-column on desktop, 1-column on narrow phones. Lives inside
-   the pricing card to keep the marketing message close to the price
-   and the Download button. */
-.feature-pills {
+/* ============== HERO HIGHLIGHTS ============== */
+/* Three short trust-signal items rendered right under the hero CTAs.
+   No pill backgrounds — just a flat coloured icon and label, so they
+   read as an inline promise row rather than a card list. Two columns
+   on desktop, wrapping to two rows; collapses to a single column on
+   very narrow screens. */
+.hero-highlights {
   list-style: none;
-  margin: 18px auto 22px;
+  margin: 22px 0 0;
   padding: 0;
-  max-width: 460px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 14px 28px;
+  max-width: 460px;
 }
-.feature-pills li {
+.hero-highlights li {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 107, 58, 0.12);
-  border-radius: 14px;
-  padding: 10px 12px;
   color: var(--ink-700);
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  line-height: 1.25;
-  box-shadow: 0 1px 2px rgba(15, 107, 58, 0.04);
+  line-height: 1.3;
 }
-.feature-pills .feature-pill-ico {
-  flex: 0 0 32px;
-  width: 32px;
-  height: 32px;
+.hero-highlights-ico {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(31, 230, 132, 0.14);
   color: var(--green-700);
-  border-radius: 999px;
-  font-size: 1rem;
-  line-height: 1;
 }
+.hero-highlights-ico svg { display: block; }
 @media (max-width: 480px) {
-  .feature-pills {
+  .hero-highlights {
     grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 .disclaimer {
