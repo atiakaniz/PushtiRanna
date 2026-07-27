@@ -833,6 +833,53 @@ code {
   color: var(--green-700);
   font-weight: 700;
 }
+
+/* ============== FEATURE PILLS (pricing card) ============== */
+/* Three rounded white pills with a green circular emoji icon on the
+   left. 2-column on desktop, 1-column on narrow phones. Lives inside
+   the pricing card to keep the marketing message close to the price
+   and the Download button. */
+.feature-pills {
+  list-style: none;
+  margin: 18px auto 22px;
+  padding: 0;
+  max-width: 460px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.feature-pills li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 107, 58, 0.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--ink-700);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.25;
+  box-shadow: 0 1px 2px rgba(15, 107, 58, 0.04);
+}
+.feature-pills .feature-pill-ico {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(31, 230, 132, 0.14);
+  color: var(--green-700);
+  border-radius: 999px;
+  font-size: 1rem;
+  line-height: 1;
+}
+@media (max-width: 480px) {
+  .feature-pills {
+    grid-template-columns: 1fr;
+  }
+}
 .disclaimer {
   font-size: 0.85rem;
   color: var(--ink-500);
