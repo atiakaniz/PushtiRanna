@@ -53,6 +53,54 @@ class PhoneAuthController extends GetxController {
 
   bool get isSubscribed => _box.get(_subscribedKey) == '1';
 
+  /// Latest subscription state reported by bdapps. One of:
+  ///   * `'REGISTERED'`         — fully subscribed, full app access
+  ///   * `'INITIAL_CHARGING_PENDING'` (or any CHARGING_PENDING variant)
+  ///                            — operator has not yet confirmed the first
+  ///                              charge; user is in the app but recipes
+  ///                              are soft-locked until charging clears
+  ///   * `'UNREGISTERED'` / `null` — not subscribed; full app lockout
+  ///
+  /// UI surfaces (Home, Detail) observe this so a freshly-subscribed user
+  /// who hasn't paid their first bill yet can browse the catalogue but
+  /// cannot open any individual recipe.
+  final RxnString subscriptionStatus = RxnString();
+
+  /// True only when the user has both `is_subscribed = true` AND the
+  /// server has confirmed the subscription is fully active (not still
+  /// waiting on the operator's first-charge confirmation).
+  bool get hasFullAccess =>
+      isSubscribed &&
+      (subscriptionStatus.value == null ||
+          !subscriptionStatus.value!.toUpperCase().contains('CHARGING PENDING'));
+
+  /// Last time the user foregrounded the app. We use this to throttle
+  /// resume-time subscription checks so a flurry of app-switches
+  /// (open PushtiRanna → switch to messenger → back → WhatsApp → back)
+  /// only triggers one network round-trip per foreground window. Without
+  /// this, every switch generates a new checkSubscription call and any
+  /// transient `isSubscribed: false` reply (network blip, operator
+  /// retry) routes the user back to PHONE.
+  DateTime _lastResumeCheck = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Cooldown between resume-time checks. 60s is short enough to still
+  /// catch a real external unsubscribe but long enough to swallow the
+  /// rapid-fire false-positives you get while bouncing between apps.
+  static const _resumeCheckCooldown = Duration(seconds: 60);
+
+  /// Whether the resume hook should fire a check right now, given the
+  /// last-known foreground time. Used by [_AppLifecycleHook].
+  bool get shouldResumeCheckNow {
+    return DateTime.now().difference(_lastResumeCheck) >= _resumeCheckCooldown;
+  }
+
+  /// Record that we just fired a resume check. Called from inside
+  /// [checkSubscription] so it reflects the *actual* call time, not the
+  /// hook time (which can be delayed).
+  void _noteResumeCheck() {
+    _lastResumeCheck = DateTime.now();
+  }
+
   Future<void> markSubscribed() async {
     await _box.put(_subscribedKey, '1');
     // Reset the one-shot revoke notification so a *future* revoke can
@@ -112,22 +160,40 @@ class PhoneAuthController extends GetxController {
   /// The PHP `check_subscription.php` returns several shapes depending on
   /// what bdapps reports. We accept any of the following as "active":
   ///   * `isSubscribed === true`
+  ///   * `subscriptionStatus` containing `CHARGING PENDING` /
+  ///     `CHARGING_PENDING` / `CHARGE PENDING` (first-charge not yet
+  ///     confirmed; the user IS subscribed, the operator just hasn't
+  ///     billed yet)
   ///   * `subscriptionStatus === "REGISTERED"` (or `"registered"`)
   ///   * `statusCode === "S1000"` and no explicit `isSubscribed === false`
   ///
-  /// Everything else (including E1951 transient getStatus errors,
-  /// `UNREGISTERED`, E1351 with "format of address is invalid") is treated
-  /// as "not subscribed" — bdapps will only return a positive answer when
-  /// it can actually confirm the user's subscription, so the safe default
-  /// is to lock the app out when the payload is ambiguous.
+  /// If the response is *explicitly* "not subscribed" (`isSubscribed
+  /// === false` or `subscriptionStatus === "UNREGISTERED"`) we treat
+  /// that as a real revoke and clear local state so GateScreen routes
+  /// the user back to the subscription flow.
   ///
-  /// On detecting a revoked subscription we also clear the cached phone
-  /// number and bump [subscriptionRevokedAt] so screens can react.
+  /// Anything else — network errors, transient E1951 getStatus errors,
+  /// empty payloads — is **not** treated as a revoke here. The
+  /// [_AppLifecycleHook] on resume runs `checkSubscription` on every
+  /// foreground, and a flaky network must never log a real subscriber
+  /// out of the app. Callers that want the strict "lock me out on any
+  /// ambiguity" behaviour (GateScreen on cold start) can read
+  /// [subscriptionStatus] / [isSubscribed] and route accordingly.
+  ///
+  /// On detecting a real revoke we also clear the cached phone number
+  /// only when requested (the lifecycle hook passes `clearPhone: false`
+  /// so the user doesn't have to re-type their number), and bump
+  /// [subscriptionRevokedAt] so screens can react.
   Future<bool> checkSubscription() async {
     final phone = currentPhone.value;
     if (phone.isEmpty) return false;
     isLoading.value = true;
     lastError.value = '';
+    // Stamp the resume time as soon as we *actually* hit the network —
+    // _AppLifecycleHook uses this together with the cooldown to avoid
+    // hammering bdapps (and risking a transient revoke) on every
+    // foreground bounce.
+    _noteResumeCheck();
     try {
       final data = await BdappsService.checkSubscription(_forApi(phone));
       debugPrint('[PhoneAuth] checkSubscription response: $data');
@@ -147,28 +213,75 @@ class PhoneAuthController extends GetxController {
       // subscriptionStatus is not REGISTERED yet, and `isSubscribed`
       // comes back as `false` even though the user IS in fact subscribed
       // and shouldn't be locked out. Treat any pending-charge state as
-      // active so we don't drop the user back to PHONE on every resume.
+      // active so we don't drop the user back to PHONE on every resume
+      // (e.g. when the user opens another app and returns, or taps the
+      // system share sheet and comes back).
       final isChargingPending = subStatus.contains('CHARGING PENDING') ||
           subStatus.contains('CHARGE PENDING');
 
+      // The user is "active" if any of these hold:
+      //   * bdapps said so explicitly (`isSubscribed: true`)
+      //   * the subscription is awaiting its first charge
+      //   * the response is clean (S1000 / REGISTERED) without an
+      //     explicit `isSubscribed: false` override
       final active = explicitActive ||
+          isChargingPending ||
           (!explicitInactive &&
-              !isChargingPending &&
               (statusCode == 'S1000' || subStatus == 'REGISTERED'));
 
+      // "Explicitly revoked" means bdapps is unambiguous: the user
+      // really did unsubscribe (or never was subscribed). Anything else —
+      // a transient S1000 with no subscriptionStatus, an empty body, an
+      // E1951 transient error — leaves the existing local flag alone.
+      // This is what stops the resume hook from kicking the user out
+      // every time the network blinks.
+      final isExplicitlyRevoked = explicitInactive ||
+          subStatus == 'UNREGISTERED' ||
+          subStatus == 'UNSUBSCRIBED';
+
+      // Publish the latest status so the UI can react (Home can show a
+      // "first charge pending" hint, Detail can soft-lock recipes, etc.).
+      // Done unconditionally — even on the not-subscribed branch below —
+      // so the UI never shows a stale value from a previous check.
+      subscriptionStatus.value = subStatus.isEmpty ? null : subStatus;
+
       if (active) {
-        await markSubscribed();
+        // Make sure the local `is_subscribed` flag is set, even when the
+        // server reports charging-pending (where `isSubscribed` comes
+        // back false). Without this, `_AppLifecycleHook.didChange…
+        // resumed` short-circuits because its own `isSubscribed` guard
+        // would be false, AND the next cold start would re-route the
+        // user back to PHONE through GateScreen.
+        if (isChargingPending || !isSubscribed) {
+          await markSubscribed();
+        }
+        if (isChargingPending) {
+          debugPrint(
+              '[PhoneAuth] charging-pending treated as active: "$subStatus"');
+        }
         return true;
       }
 
-      // Not subscribed / inactive / ambiguous. Clear the local
-      // `is_subscribed` flag so GateScreen routes the user back into the
-      // subscription flow, but keep the saved phone number on disk so the
-      // user does not have to re-type it — the OTP step will just go
-      // straight back to HOME if the subscription is already active on
-      // the server (e.g. they re-subscribed from the landing page).
-      await _handleRevoked(clearPhone: false, detail: statusDetail);
-      return false;
+      if (isExplicitlyRevoked) {
+        // The user has genuinely unsubscribed. Clear local state so
+        // GateScreen routes them back to the subscription flow, and
+        // keep the saved phone number on disk so they don't have to
+        // re-type it — the OTP step will go straight back to HOME if
+        // they re-subscribe from the landing page.
+        await _handleRevoked(clearPhone: false, detail: statusDetail);
+        return false;
+      }
+
+      // Ambiguous / transient response (network glitch, S1000 with no
+      // payload, etc.). Do NOT flip `is_subscribed` — that would lock
+      // a paying subscriber out of the app every time they switch to
+      // another app and come back. Surface the raw status for the UI
+      // and return the previous belief so the caller leaves the user
+      // where they were.
+      debugPrint(
+          '[PhoneAuth] ambiguous subscription response, leaving state alone: '
+          '"$subStatus" (statusCode=$statusCode)');
+      return isSubscribed;
     } on BdappsException catch (e) {
       lastError.value = e.message;
       return false;
@@ -414,12 +527,19 @@ class PhoneAuthController extends GetxController {
 /// Bridges [WidgetsBinding] lifecycle callbacks into [PhoneAuthController].
 ///
 /// On every `AppLifecycleState.resumed` we re-validate the cached
-/// subscription against `check_subscription.php`. If bdapps reports the
+/// subscription against `check_subscription.php`. If bdapps confirms the
 /// user is no longer subscribed, the controller clears local state and
 /// the screens (Home, Settings, Gate) observe the bump and route to the
-/// gate. Network errors are swallowed: a flaky connection must never
-/// kick the user out of the app on its own — the source of truth has to
-/// be an explicit "not subscribed" answer from bdapps.
+/// gate. Network errors and ambiguous responses are swallowed: a flaky
+/// connection must never kick the user out of the app on its own — the
+/// source of truth has to be an explicit "not subscribed" answer from
+/// bdapps (`isSubscribed: false` or `subscriptionStatus: UNREGISTERED`).
+///
+/// Note: the `isSubscribed` short-circuit below means that, if a user
+/// has somehow lost the local flag (e.g. a previous run revoked them),
+/// we deliberately skip the resume check rather than re-revoke. The
+/// next cold start will route them through GateScreen which does the
+/// authoritative re-check.
 class _AppLifecycleHook extends WidgetsBindingObserver {
   _AppLifecycleHook(this._controller);
 
@@ -430,9 +550,11 @@ class _AppLifecycleHook extends WidgetsBindingObserver {
     if (state != AppLifecycleState.resumed) return;
     if (_controller.currentPhone.value.isEmpty) return;
     if (!_controller.isSubscribed) return;
-    // Fire-and-forget. checkSubscription handles all errors internally and
-    // will only mutate state / bump subscriptionRevokedAt when bdapps
-    // confirms the user is no longer subscribed.
+    if (!_controller.shouldResumeCheckNow) return;
+    // Fire-and-forget. checkSubscription treats charging-pending and
+    // ambiguous/transient responses as "leave state alone" — only an
+    // explicit `isSubscribed: false` / `UNREGISTERED` will clear the
+    // local flag and bump subscriptionRevokedAt.
     unawaited(_controller.checkSubscription());
   }
 }
