@@ -33,15 +33,18 @@ class _HomeScreenState extends State<HomeScreen> {
       Get.offAllNamed(AppRoutes.GATE);
     });
 
-    // Belt-and-braces: even if the user keeps the app in the foreground
-    // for a long stretch (so the AppLifecycleState.resumed hook never
-    // fires), poll the server every 30s. If bdapps says the subscription
-    // is gone, _phone.subscriptionRevokedAt bumps and the worker above
-    // routes us back to the gate.
-    _subscriptionPoll = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => _phone.checkSubscription(),
-    );
+    // Belt-and-braces poll disabled. While bdapps returned
+    // `INITIAL CHARGING PENDING` for every fresh subscriber, the 30s
+    // foreground poll kept flagging the user as unsubscribed and
+    // bouncing them back to PHONE every minute. The lifecycle-resumed
+    // hook in PhoneAuthController already re-validates whenever the
+    // app comes to the foreground, which is sufficient for the
+    // "unsubscribed from the landing page then re-opens the app"
+    // scenario this poll was added to cover.
+    // _subscriptionPoll = Timer.periodic(
+    //   const Duration(seconds: 30),
+    //   (_) => _phone.checkSubscription(),
+    // );
   }
 
   @override

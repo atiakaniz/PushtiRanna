@@ -141,8 +141,19 @@ class PhoneAuthController extends GetxController {
       final statusDetail =
           (data['statusDetail'] ?? data['message'] ?? '').toString();
 
+      // bdapps uses INITIAL CHARGING PENDING / CHARGING_PENDING /
+      // CHARGE_PENDING while the operator is still confirming the first
+      // charge on a freshly-subscribed user. During that window the
+      // subscriptionStatus is not REGISTERED yet, and `isSubscribed`
+      // comes back as `false` even though the user IS in fact subscribed
+      // and shouldn't be locked out. Treat any pending-charge state as
+      // active so we don't drop the user back to PHONE on every resume.
+      final isChargingPending = subStatus.contains('CHARGING PENDING') ||
+          subStatus.contains('CHARGE PENDING');
+
       final active = explicitActive ||
           (!explicitInactive &&
+              !isChargingPending &&
               (statusCode == 'S1000' || subStatus == 'REGISTERED'));
 
       if (active) {
