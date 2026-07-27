@@ -63,19 +63,22 @@ class _PhoneScreenState extends State<PhoneScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(flex: 2),
+              const Spacer(flex: 1),
               Center(
                 child: Container(
-                  width: 76,
-                  height: 76,
+                  width: 96,
+                  height: 96,
                   decoration: BoxDecoration(
                     color: AuthTheme.accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: AuthTheme.accent,
-                    size: 32,
+                  padding: const EdgeInsets.all(8),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/icon/app_icon.jpg',
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),
@@ -122,7 +125,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
                           : const Text('Continue'),
                     ),
                   )),
-              const Spacer(flex: 3),
+              const SizedBox(height: 90),
+              _ChargingNotice(),
+              const Spacer(flex: 4),
             ],
           ),
         ),
@@ -170,6 +175,60 @@ class _PhoneField extends StatelessWidget {
           borderSide:
               const BorderSide(color: AuthTheme.borderFocused, width: 1.6),
         ),
+      ),
+    );
+  }
+}
+
+class _ChargingNotice extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AuthTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AuthTheme.accent.withValues(alpha: 0.35),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          RichText(
+            text: const TextSpan(
+              style: TextStyle(fontSize: 14, height: 1.5),
+              children: [
+                TextSpan(
+                  text: 'Charging: ',
+                  style: TextStyle(color: AuthTheme.textSecondary),
+                ),
+                TextSpan(
+                  text: '2.78 BDT',
+                  style: TextStyle(
+                    color: AuthTheme.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                TextSpan(
+                  text: ' including (Vat+SC+SD)',
+                  style: TextStyle(color: AuthTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'For Robi and Airtel Users only.',
+            style: TextStyle(
+              color: AuthTheme.textMuted,
+              fontSize: 12,
+              height: 1.4,
+            ),
+          ),
+        ],
       ),
     );
   }
