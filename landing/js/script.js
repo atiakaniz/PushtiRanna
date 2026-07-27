@@ -86,8 +86,10 @@
     });
 
     // Reset on resize back to desktop so we don't keep body locked.
+    // Matches the CSS breakpoint where the off-canvas sheet collapses
+    // into the inline horizontal nav.
     window.addEventListener('resize', function () {
-      if (window.innerWidth > 640 && nav.classList.contains('is-open')) {
+      if (window.innerWidth > 720 && nav.classList.contains('is-open')) {
         setOpen(false);
       }
     });
