@@ -164,8 +164,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ShareParams(
                       text:
                       "🍲 Check out PushtiRanna - Healthy Bengali Recipe App!\n\n"
-                          "Learn more:\n"
-                          "https://NestorabyAtia/pushtiranna",
+                          "Download the app:\n"
+                          "https://pushtiranna.nestorabyatia.xyz/app_apk/pushti_ranna.apk",
                     ),
                   );
                 },
