@@ -206,7 +206,7 @@ class _ChargingNotice extends StatelessWidget {
                   style: TextStyle(color: AuthTheme.textSecondary),
                 ),
                 TextSpan(
-                  text: '2.78 BDT',
+                  text: '2.78 BDT/day',
                   style: TextStyle(
                     color: AuthTheme.textPrimary,
                     fontWeight: FontWeight.w700,
